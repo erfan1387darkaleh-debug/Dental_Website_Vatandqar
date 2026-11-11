@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "خدمات دندانپزشکی",
-  description: `فهرست خدمات ${SITE.name}؛ از معاینه، جرم‌گیری و ترمیم تا درمان ریشه، روکش و پروتز و خدمات زیبایی دندان.`,
+  description: `فهرست کامل خدمات در شعبه‌های ${SITE.name}؛ از معاینه، جرم‌گیری و ترمیم تا درمان ریشه، روکش و پروتز و خدمات زیبایی دندان.`,
   alternates: { canonical: "/services" },
 };
 
@@ -18,7 +18,7 @@ export default function ServicesPage() {
     <>
       <PageHeader
         eyebrow="خدمات"
-        title="خدمات دندانپزشکی کلینیک"
+        title="خدمات دندانپزشکی"
         description="هر خدمت با معاینه دقیق شروع می‌شود و با توضیح شفاف مراحل و هزینه‌ها پیش می‌رود؛ تا با خیال راحت تصمیم بگیرید."
       />
 
@@ -37,7 +37,7 @@ export default function ServicesPage() {
           </div>
 
           <p className="mt-10 text-center text-sm leading-7 text-subtle">
-            اگر خدمت مورد نیازتان در فهرست نیست، با کلینیک تماس بگیرید تا
+            اگر خدمت مورد نیازتان در فهرست نیست، با دندانپزشکی تماس بگیرید تا
             درباره شرایط شما راهنمایی‌تان کنیم.
           </p>
         </Container>

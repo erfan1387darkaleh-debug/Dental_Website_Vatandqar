@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { ArrowLeft, MessagesSquare, Phone, ShieldCheck } from "lucide-react";
-import {
-  PHONE_DISPLAY,
-  SITE,
-  telHref,
-} from "@/lib/site-config";
+import { MapPin, MessagesSquare, Phone, ShieldCheck } from "lucide-react";
+import { BRANCHES, SITE } from "@/lib/site-config";
 import { btnPrimary, btnSecondary } from "@/lib/styles";
 import { ToothLogo } from "@/components/tooth-logo";
 import { Container } from "@/components/container";
 
-/** بخش هیرو صفحه اصلی — معرفی کوتاه کلینیک و فراخوان اصلی */
+/** بخش هیرو صفحه اصلی — معرفی کوتاه دندانپزشکی و فراخوان اصلی */
 export function HeroSection() {
   return (
     <section
@@ -32,7 +28,7 @@ export function HeroSection() {
           <div className="animate-fade-up text-center lg:text-start">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-tint px-4 py-1.5 text-xs font-bold text-primary-800 dark:border-primary-900 dark:text-primary-200">
               <ToothLogo className="h-3.5 w-3.5" />
-              {SITE.name}
+              {SITE.shortName}
             </span>
             <h1
               id="hero-heading"
@@ -42,34 +38,31 @@ export function HeroSection() {
               <span className="text-accent">اولویت ماست</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-muted sm:text-lg sm:leading-9 lg:mx-0">
-              در کلینیک دندانپزشکی هدیه یوسف، سلامت دهان و دندان شما را با دقت،
-              صبر و رعایت کامل اصول بهداشتی بررسی و درمان می‌کنیم؛ در فضایی
+              {SITE.name} با دو شعبه در مشهد، سلامت دهان و دندان شما را با دقت،
+              صبر و رعایت کامل اصول بهداشتی بررسی و درمان می‌کند؛ در فضایی
               آرام که راحتی شما در اولویت است.
             </p>
 
+            {/* فراخوان اصلی: تماس با شعبه‌ها + تماس با مشاوران */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link href="/services" className={btnPrimary}>
-                مشاهده خدمات
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <Link href="/#branches" className={btnPrimary}>
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                تماس با شعبه‌ها
               </Link>
               <Link href="/#contact" className={btnSecondary}>
-                تماس با ما
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                تماس با مشاوران
               </Link>
             </div>
 
+            {/* حضور دو شعبه در مشهد — با دادهٔ بخش شعبه‌ها */}
             <p className="mt-7 flex flex-wrap items-center justify-center gap-2 text-sm text-subtle lg:justify-start">
-              <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
-              برای هماهنگی نوبت تماس بگیرید:
-              <a
-                href={telHref}
-                className="font-bold text-accent-strong transition-colors duration-200 hover:text-accent-hover hover:underline"
-              >
-                {PHONE_DISPLAY}
-              </a>
+              <MapPin className="h-4 w-4 text-accent" aria-hidden="true" />
+              {`دو شعبه در مشهد؛ ${BRANCHES.map((branch) => branch.area).join(" و ")}`}
             </p>
           </div>
 
-          {/* تصویرسازی معرفی کلینیک */}
+          {/* تصویرسازی معرفی دندانپزشکی */}
           <div className="animate-fade-up [animation-delay:150ms]">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               <div

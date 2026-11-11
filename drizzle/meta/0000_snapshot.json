@@ -1,0 +1,133 @@
+{
+  "id": "3a92a0d5-084e-44e8-a830-de57ec36979d",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.appointments": {
+      "name": "appointments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at_utc": {
+          "name": "starts_at_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "patient_name": {
+          "name": "patient_name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_phone": {
+          "name": "patient_phone",
+          "type": "varchar(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "appointments_branch_slot_uq": {
+          "name": "appointments_branch_slot_uq",
+          "columns": [
+            {
+              "expression": "branch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at_utc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "appointments_branch_id_valid": {
+          "name": "appointments_branch_id_valid",
+          "value": "\"appointments\".\"branch_id\" IN ('hediye-yousef', 'vatandar')"
+        },
+        "appointments_source_valid": {
+          "name": "appointments_source_valid",
+          "value": "\"appointments\".\"source\" IN ('public', 'staff')"
+        },
+        "appointments_phone_format": {
+          "name": "appointments_phone_format",
+          "value": "\"appointments\".\"patient_phone\" ~ '^09[0-9]{9}$'"
+        },
+        "appointments_duration_fixed": {
+          "name": "appointments_duration_fixed",
+          "value": "\"appointments\".\"duration_minutes\" = 10"
+        },
+        "appointments_slot_grid": {
+          "name": "appointments_slot_grid",
+          "value": "EXTRACT(SECOND FROM \"appointments\".\"starts_at_utc\") = 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

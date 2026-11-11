@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { InstagramIcon } from "@/components/instagram-icon";
+import { TelegramIcon } from "@/components/telegram-icon";
 import { RubikaIcon } from "@/components/rubika-icon";
 import { PersianYear } from "@/components/persian-year";
-import { MapPin, Phone, Send } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
 import {
-  CLINIC_ADDRESS,
+  BRANCHES,
   INSTAGRAM_URL,
   NAV_LINKS,
-  PHONE_DISPLAY,
   RUBIKA_URL,
   SITE,
   TELEGRAM_URL,
-  telHref,
+  toPersianDigits,
 } from "@/lib/site-config";
 import { services } from "@/data/services";
 import { ToothLogo } from "./tooth-logo";
 import { Container } from "./container";
 
-/** فوتر سایت — اطلاعات کلینیک، دسترسی سریع و شبکه‌های اجتماعی */
+/** فوتر سایت — اطلاعات دندانپزشکی، دسترسی سریع و شبکه‌های اجتماعی */
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-canvas">
@@ -38,7 +38,7 @@ export function SiteFooter() {
                   {SITE.shortName}
                 </span>
                 <span className="text-[11px] font-medium text-subtle">
-                  کلینیک دندانپزشکی
+                  {SITE.subtitle}
                 </span>
               </span>
             </Link>
@@ -51,8 +51,8 @@ export function SiteFooter() {
                 href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="اینستاگرام کلینیک"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong text-muted transition-colors duration-200 hover:border-primary-300 hover:text-accent dark:hover:border-primary-800"
+                aria-label="اینستاگرام بازرگانی وطندار"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong transition-colors duration-200 hover:border-primary-300 hover:bg-surface-2 dark:hover:border-primary-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
               >
                 <InstagramIcon className="h-4.5 w-4.5" aria-hidden="true" />
               </a>
@@ -60,17 +60,17 @@ export function SiteFooter() {
                 href={TELEGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="تلگرام کلینیک"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong text-muted transition-colors duration-200 hover:border-primary-300 hover:text-accent dark:hover:border-primary-800"
+                aria-label="تلگرام بازرگانی وطندار"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong transition-colors duration-200 hover:border-primary-300 hover:bg-surface-2 dark:hover:border-primary-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
               >
-                <Send className="h-4.5 w-4.5" aria-hidden="true" />
+                <TelegramIcon className="h-4.5 w-4.5" aria-hidden="true" />
               </a>
               <a
                 href={RUBIKA_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="روبیکا کلینیک"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong text-muted transition-colors duration-200 hover:border-primary-300 hover:text-accent dark:hover:border-primary-800"
+                aria-label="روبیکا بازرگانی وطندار"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong transition-colors duration-200 hover:border-primary-300 hover:bg-surface-2 dark:hover:border-primary-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
               >
                 <RubikaIcon className="h-4.5 w-4.5" aria-hidden="true" />
               </a>
@@ -119,29 +119,39 @@ export function SiteFooter() {
             </ul>
           </nav>
 
-          {/* اطلاعات تماس */}
+          {/* اطلاعات تماس شعبه‌ها */}
           <div>
-            <h2 className="text-sm font-bold text-heading">اطلاعات تماس</h2>
-            <ul className="mt-4 space-y-3">
-              <li>
-                <a
-                  href={telHref}
-                  className="inline-flex items-center gap-2 text-sm text-muted transition-colors duration-200 hover:text-accent"
-                >
-                  <Phone
-                    className="h-4 w-4 shrink-0 text-accent"
-                    aria-hidden="true"
-                  />
-                  <span className="font-semibold">{PHONE_DISPLAY}</span>
-                </a>
-              </li>
-              <li className="flex items-start gap-2 text-sm leading-6 text-muted">
-                <MapPin
-                  className="mt-0.5 h-4 w-4 shrink-0 text-accent"
-                  aria-hidden="true"
-                />
-                <span>{CLINIC_ADDRESS}</span>
-              </li>
+            <h2 className="text-sm font-bold text-heading">شعبه‌ها</h2>
+            <ul className="mt-4 space-y-5">
+              {BRANCHES.map((branch) => (
+                <li key={branch.id}>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-heading">
+                    <MapPin
+                      className="h-4 w-4 shrink-0 text-accent"
+                      aria-hidden="true"
+                    />
+                    {`شعبه ${branch.name}`}
+                    <span className="font-medium text-subtle">
+                      {`— ${branch.area}`}
+                    </span>
+                  </p>
+                  <a
+                    href={branch.telHref}
+                    dir="ltr"
+                    aria-label={`تماس با ${branch.descriptor}`}
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition-colors duration-200 hover:text-accent"
+                  >
+                    <Phone
+                      className="h-4 w-4 shrink-0 text-accent"
+                      aria-hidden="true"
+                    />
+                    {toPersianDigits(branch.displayPhone)}
+                  </a>
+                  <p className="mt-1.5 text-sm leading-6 text-muted">
+                    {branch.address}
+                  </p>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

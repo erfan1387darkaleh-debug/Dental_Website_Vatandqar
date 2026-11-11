@@ -55,7 +55,7 @@ export default async function Image() {
             color: "#0f172a",
           }}
         >
-          هدیه یوسف
+          بازرگانی وطندار
         </div>
 
         <div
@@ -66,7 +66,7 @@ export default async function Image() {
             marginTop: 18,
           }}
         >
-          کلینیک دندانپزشکی
+          خدمات دندانپزشکی
         </div>
 
         <div
@@ -77,7 +77,7 @@ export default async function Image() {
             marginTop: 28,
           }}
         >
-          مراقبت از سلامت و زیبایی لبخند شما
+          دو شعبه در مشهد؛ هدیه یوسف و وطندار
         </div>
       </div>
     ),

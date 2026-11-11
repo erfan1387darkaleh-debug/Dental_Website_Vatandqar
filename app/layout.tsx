@@ -1,17 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import {
-  CLINIC_ADDRESS,
-  INSTAGRAM_URL,
-  PHONE_NUMBER,
-  RUBIKA_URL,
-  SITE,
-  SITE_URL,
-  TELEGRAM_URL,
-} from "@/lib/site-config";
+import { SITE, SITE_URL } from "@/lib/site-config";
 
 /*
  * فونت فارسی «وزیرمتن» (self-hosted) — فایل در app/fonts قرار دارد و
@@ -27,14 +17,17 @@ const vazirmatn = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE.name} | مراقبت از سلامت و زیبایی لبخند شما`,
+    default: `${SITE.name} | دو شعبه در مشهد`,
     template: `%s | ${SITE.name}`,
   },
   description: SITE.description,
   keywords: [
     "دندانپزشکی",
-    "کلینیک دندانپزشکی",
-    "هدیه یوسف",
+    "دندانپزشکی مشهد",
+    "مطب دندانپزشکی مشهد",
+    "بازرگانی وطندار",
+    "دندانپزشکی هدیه یوسف",
+    "دندانپزشکی وطندار",
     "سلامت دهان و دندان",
     "جرم‌گیری",
     "درمان ریشه",
@@ -68,23 +61,7 @@ export const viewport: Viewport = {
  * تنظیم می‌کند. اجرای آن پیش از رنگ‌آمیزی اول است و «فلش تم» ندارد.
  */
 const themeScript =
-  '(function(){try{var s=localStorage.getItem("theme");if(s!=="light"&&s!=="dark"){s=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.classList.toggle("dark",s==="dark")}catch(e){}})();';
-
-/** داده ساختاریافته (Schema.org) برای بهبود نمایش در نتایج جست‌وجو */
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Dentist",
-  name: SITE.name,
-  description: SITE.description,
-  url: SITE_URL,
-  telephone: PHONE_NUMBER,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: CLINIC_ADDRESS,
-    addressCountry: "IR",
-  },
-  sameAs: [INSTAGRAM_URL, TELEGRAM_URL, RUBIKA_URL],
-};
+  "(function(){try{var s=localStorage.getItem(\"theme\");if(s!==\"light\"&&s!==\"dark\"){s=window.matchMedia(\"(prefers-color-scheme: dark)\").matches?\"dark\":\"light\"}document.documentElement.classList.toggle(\"dark\",s===\"dark\")}catch(e){}})();";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -101,22 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           * <html> تفاوت احتمالی کلاس dark بین سرور و کلاینت را بی‌اثر می‌کند.
           */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {/* لینک پرش برای کاربران صفحه‌کلید */}
-        <a
-          href="#main-content"
-          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:right-3 focus-visible:z-100 focus-visible:rounded-full focus-visible:bg-white focus-visible:px-4 focus-visible:py-2 focus-visible:text-sm focus-visible:font-bold focus-visible:text-primary-800 focus-visible:shadow-lg focus-visible:ring-1 focus-visible:ring-slate-200"
-        >
-          پرش به محتوای اصلی
-        </a>
-        <SiteHeader />
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
-        <SiteFooter />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        {children}
       </body>
     </html>
   );

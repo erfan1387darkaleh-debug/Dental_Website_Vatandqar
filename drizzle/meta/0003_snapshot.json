@@ -1,0 +1,365 @@
+{
+  "id": "d9b310d6-3f83-4255-866e-22357794622d",
+  "prevId": "a46b98bf-accf-4559-aae0-68b731db703a",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.appointments": {
+      "name": "appointments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at_utc": {
+          "name": "starts_at_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "patient_name": {
+          "name": "patient_name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_phone": {
+          "name": "patient_phone",
+          "type": "varchar(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confirmed'"
+        },
+        "reminder_sent_at": {
+          "name": "reminder_sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_sent_at": {
+          "name": "confirmation_sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "appointments_branch_slot_uq": {
+          "name": "appointments_branch_slot_uq",
+          "columns": [
+            {
+              "expression": "branch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at_utc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "appointments_starts_at_idx": {
+          "name": "appointments_starts_at_idx",
+          "columns": [
+            {
+              "expression": "starts_at_utc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "appointments_branch_id_valid": {
+          "name": "appointments_branch_id_valid",
+          "value": "\"appointments\".\"branch_id\" IN ('hediye-yousef', 'vatandar')"
+        },
+        "appointments_source_valid": {
+          "name": "appointments_source_valid",
+          "value": "\"appointments\".\"source\" IN ('public', 'staff')"
+        },
+        "appointments_status_valid": {
+          "name": "appointments_status_valid",
+          "value": "\"appointments\".\"status\" IN ('confirmed', 'cancelled')"
+        },
+        "appointments_phone_format": {
+          "name": "appointments_phone_format",
+          "value": "\"appointments\".\"patient_phone\" ~ '^09[0-9]{9}$'"
+        },
+        "appointments_duration_fixed": {
+          "name": "appointments_duration_fixed",
+          "value": "\"appointments\".\"duration_minutes\" = 10"
+        },
+        "appointments_slot_grid": {
+          "name": "appointments_slot_grid",
+          "value": "EXTRACT(SECOND FROM \"appointments\".\"starts_at_utc\") = 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.testimonials": {
+      "name": "testimonials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_name": {
+          "name": "patient_name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "name": "comment",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_type": {
+          "name": "treatment_type",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_approved": {
+          "name": "is_approved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "testimonials_approved_created_idx": {
+          "name": "testimonials_approved_created_idx",
+          "columns": [
+            {
+              "expression": "is_approved",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "testimonials_rating_range": {
+          "name": "testimonials_rating_range",
+          "value": "\"testimonials\".\"rating\" BETWEEN 1 AND 5"
+        },
+        "testimonials_treatment_valid": {
+          "name": "testimonials_treatment_valid",
+          "value": "\"testimonials\".\"treatment_type\" IN ('examination', 'scaling', 'filling', 'root-canal', 'extraction', 'whitening', 'prosthesis', 'cosmetic', 'preventive')"
+        },
+        "testimonials_comment_length": {
+          "name": "testimonials_comment_length",
+          "value": "CHAR_LENGTH(\"testimonials\".\"comment\") <= 500"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.gallery_cases": {
+      "name": "gallery_cases",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(400)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "treatment_type": {
+          "name": "treatment_type",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "before_image_url": {
+          "name": "before_image_url",
+          "type": "varchar(600)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "after_image_url": {
+          "name": "after_image_url",
+          "type": "varchar(600)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_published": {
+          "name": "is_published",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "gallery_cases_published_treatment_idx": {
+          "name": "gallery_cases_published_treatment_idx",
+          "columns": [
+            {
+              "expression": "is_published",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "treatment_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "gallery_cases_treatment_valid": {
+          "name": "gallery_cases_treatment_valid",
+          "value": "\"gallery_cases\".\"treatment_type\" IN ('examination', 'scaling', 'filling', 'root-canal', 'extraction', 'whitening', 'prosthesis', 'cosmetic', 'preventive')"
+        },
+        "gallery_cases_description_length": {
+          "name": "gallery_cases_description_length",
+          "value": "\"gallery_cases\".\"description\" IS NULL OR CHAR_LENGTH(\"gallery_cases\".\"description\") <= 400"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

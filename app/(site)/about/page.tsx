@@ -10,7 +10,7 @@ import { SITE } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "درباره ما",
-  description: `آشنایی با ${SITE.name}؛ فلسفه ما در مراقبت از سلامت دهان و دندان، اولویت‌هایمان و مسیر مراجعه شما به کلینیک.`,
+  description: `آشنایی با ${SITE.name}؛ فلسفه ما در مراقبت از سلامت دهان و دندان، اولویت‌هایمان و مسیر مراجعه شما به شعبه‌های دندانپزشکی.`,
   alternates: { canonical: "/about" },
 };
 
@@ -19,11 +19,11 @@ export default function AboutPage() {
     <>
       <PageHeader
         eyebrow="درباره ما"
-        title="با کلینیک هدیه یوسف آشنا شوید"
+        title={`درباره ${SITE.name}`}
         description="ما اینجا برای مراقبت از سلامت دهان و دندان شما هستیم؛ با رویکردی که در آن، شناخت دقیق نیاز شما قبل از هر درمانی قرار دارد."
       />
 
-      {/* معرفی و فلسفه کلینیک */}
+      {/* معرفی و فلسفه دندانپزشکی */}
       <section aria-labelledby="philosophy-heading">
         <Container className="py-16 sm:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -35,10 +35,11 @@ export default function AboutPage() {
                 فلسفه ما: اول سلامت، با احترام به راحتی شما
               </h2>
               <p className="mt-5 text-base leading-9 text-muted">
-                در {SITE.name} باور داریم درمان خوب از یک معاینه دقیق و گفت‌وگوی
-                صادقانه شروع می‌شود. قبل از هر اقدامی، وضعیت دهان و دندان شما را
-                کامل بررسی می‌کنیم و همه یافته‌ها و گزینه‌های درمان را به زبان
-                ساده توضیح می‌دهیم؛ تا تصمیم نهایی همیشه با شما باشد.
+                در شعبه‌های ما باور داریم درمان خوب از یک معاینه دقیق و
+                گفت‌وگوی صادقانه شروع می‌شود. قبل از هر اقدامی، وضعیت دهان و
+                دندان شما را کامل بررسی می‌کنیم و همه یافته‌ها و گزینه‌های
+                درمان را به زبان ساده توضیح می‌دهیم؛ تا تصمیم نهایی همیشه با
+                شما باشد.
               </p>
               <p className="mt-4 text-base leading-9 text-muted">
                 می‌دانیم که تجربه مراجعه به دندانپزشک، برای خیلی‌ها ساده نیست.
@@ -53,7 +54,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            {/* پنل تصویری ساده و قابل جایگزینی با عکس واقعی کلینیک */}
+            {/* پنل تصویری ساده و قابل جایگزینی با عکس واقعی دندانپزشکی */}
             <div className="relative mx-auto w-full max-w-md">
               <div
                 aria-hidden="true"
@@ -74,7 +75,7 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      {/* ارزش‌های کلینیک */}
+      {/* ارزش‌های دندانپزشکی */}
       <section
         aria-labelledby="values-heading"
         className="border-y border-line bg-surface-2"
