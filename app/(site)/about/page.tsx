@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { ValueCard } from "@/components/value-card";
 import { CtaBanner } from "@/components/cta-banner";
 import { Reveal } from "@/components/reveal";
 import { Container } from "@/components/container";
-import { ToothLogo } from "@/components/tooth-logo";
+import { ToothIcon } from "@/components/tooth-icon";
 import { CLINIC_VALUES, VISIT_STEPS } from "@/data/about";
 import { SITE } from "@/lib/site-config";
 
@@ -54,18 +55,34 @@ export default function AboutPage() {
               </p>
             </div>
 
-            {/* پنل تصویری ساده و قابل جایگزینی با عکس واقعی دندانپزشکی */}
+            {/* پنل تصویری — هم‌سبک کارت هیرو: قاب شیشه‌ای، قرص تیرهٔ گرادیان و
+                گلیف دندان سفید با درخشش‌های رنگی؛ هالهٔ پشت قاب عمداً بسیار
+                ملایم است تا ظاهر مینیمال بماند */}
             <div className="relative mx-auto w-full max-w-md">
               <div
                 aria-hidden="true"
-                className="absolute -inset-4 rounded-[2.5rem] bg-primary-100/70 sm:-inset-6 dark:bg-primary-900/30"
+                className="absolute -inset-3 rounded-[2.75rem] bg-linear-to-l from-primary-200/25 via-sky-200/20 to-indigo-200/15 blur-lg sm:-inset-4 dark:from-primary-800/10 dark:via-sky-800/10 dark:to-indigo-800/10"
               />
-              <div className="relative overflow-hidden rounded-[2rem] border border-primary-100 bg-linear-to-b from-primary-50 to-primary-100/70 dark:border-primary-900 dark:from-primary-950/70 dark:to-primary-900/25">
-                <div className="flex aspect-4/3 flex-col items-center justify-center gap-5 p-8 text-center">
-                  <div className="flex h-40 w-40 items-center justify-center rounded-full bg-surface shadow-soft dark:border dark:border-line-strong">
-                    <ToothLogo className="h-20 w-20 text-primary-600 dark:text-primary-400" />
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-surface/70 shadow-soft backdrop-blur-xl dark:border-white/10">
+                <div className="flex aspect-4/3 flex-col items-center justify-center gap-6 bg-linear-to-b from-tint via-surface to-indigo-100/20 p-8 text-center dark:from-primary-950/70 dark:via-primary-950/40 dark:to-indigo-950/20">
+                  {/* نشان مرکزی: حلقهٔ روشن + قرص تیرهٔ گرادیان + دندان و درخشش */}
+                  <div className="relative flex h-40 w-40 items-center justify-center rounded-full bg-surface p-2.5 ring-1 ring-primary-100/80 shadow-soft sm:h-48 sm:w-48 sm:p-3 dark:bg-slate-900/90 dark:ring-white/10">
+                    <div className="relative flex h-full w-full items-center justify-center rounded-full bg-linear-to-b from-slate-800 via-slate-900 to-primary-950 ring-1 ring-white/10">
+                      <ToothIcon
+                        className="h-16 w-16 text-white sm:h-20 sm:w-20"
+                        aria-hidden="true"
+                      />
+                      <Sparkles
+                        className="absolute right-6 top-6 h-5 w-5 text-primary-300 sm:right-8 sm:top-8 sm:h-6 sm:w-6"
+                        aria-hidden="true"
+                      />
+                      <Sparkles
+                        className="absolute bottom-7 left-7 h-3.5 w-3.5 text-sky-300 sm:bottom-9 sm:left-9 sm:h-4 sm:w-4"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
-                  <p className="max-w-xs text-sm font-semibold leading-7 text-primary-900 dark:text-primary-200">
+                  <p className="max-w-xs text-sm font-semibold leading-7 text-heading dark:text-primary-200">
                     «راحتی شما در اولویت، سلامت لبخندتان در مرکز توجه»
                   </p>
                 </div>

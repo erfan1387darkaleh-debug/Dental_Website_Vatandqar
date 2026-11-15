@@ -217,6 +217,64 @@ export const TELEGRAM_URL = `https://t.me/${TELEGRAM_USERNAME}`;
 export const RUBIKA_URL = `https://rubika.ir/${RUBIKA_USERNAME}`;
 
 /* ────────────────────────────────────────────────────────────────
+ *  کانال مشاورهٔ هر حوزه (دندانپزشکی، زیبایی، محصولات)
+ * ────────────────────────────────────────────────────────────────
+ *  هر بخش سایت جعبهٔ مشاورهٔ مخصوص خودش را دارد که از همین جدول
+ *  می‌خواند؛ همهٔ جعبه‌ها دو راه ارتباطی دارند: تلگرام و تماس تلفنی.
+ *
+ *  TODO: تا زمان تعیین شناسهٔ تلگرام یا شمارهٔ تلفن اختصاصی برای بخش
+ *  زیبایی و محصولات، هر دو از کانال اصلی و شمارهٔ شعبهٔ اصلی استفاده
+ *  می‌کنند؛ پس از تعیین، فقط همین‌جا ویرایش شود (تمام صفحات خودکار
+ *  به‌روز می‌شوند).
+ * ────────────────────────────────────────────────────────────────
+ */
+export type DepartmentKey = "dental" | "beauty" | "products";
+
+export interface DepartmentContact {
+  key: DepartmentKey;
+  /** عنوان جعبهٔ مشاوره */
+  title: string;
+  /** توضیح یک‌خطی جعبه */
+  description: string;
+  /** لینک تلگرام اختصاصی بخش — خارجی و در تب جدید باز می‌شود */
+  telegramUrl: string;
+  /** لینک tel: تماس مستقیم بخش */
+  phoneHref: string;
+  /** شمارهٔ نمایشی بخش (با ارقام فارسی رندر می‌شود) */
+  phoneDisplay: string;
+}
+
+export const DEPARTMENT_CONTACTS: Record<DepartmentKey, DepartmentContact> = {
+  dental: {
+    key: "dental",
+    title: "مشاورهٔ دندانپزشکی",
+    description:
+      "برای هماهنگی نوبت و پرسش‌های درمانی؛ پاسخ‌گویی در ساعات کاری شعبه‌ها.",
+    telegramUrl: TELEGRAM_URL,
+    phoneHref: BRANCHES[0].telHref,
+    phoneDisplay: BRANCHES[0].displayPhone,
+  },
+  beauty: {
+    key: "beauty",
+    title: "مشاورهٔ خدمات زیبایی",
+    description:
+      "برای بوتاکس، پیکرتراشی، برداشتن خال و مراقبت پوست؛ مشاوره پیش از هر اقدام.",
+    telegramUrl: TELEGRAM_URL,
+    phoneHref: BRANCHES[0].telHref,
+    phoneDisplay: BRANCHES[0].displayPhone,
+  },
+  products: {
+    key: "products",
+    title: "مشاورهٔ محصولات وطندار",
+    description:
+      "برای استعلام قیمت، موجودی و راهنمایی خرید کالاهای منتخب وطندار.",
+    telegramUrl: TELEGRAM_URL,
+    phoneHref: BRANCHES[0].telHref,
+    phoneDisplay: BRANCHES[0].displayPhone,
+  },
+};
+
+/* ────────────────────────────────────────────────────────────────
  *  سامانه نوبت‌دهی آنلاین
  * ────────────────────────────────────────────────────────────────
  *  تنظیمات مشترک نوبت‌دهی — هم در سمت سرور (اعتبارسنجی نوبت‌ها) و
@@ -239,10 +297,21 @@ export const BOOKING = {
 } as const;
 
 /** لینک‌های منوی اصلی سایت — «تماس و مشاوره» به بخش یکپارچهٔ تماس و
- *  مشاوره در انتهای صفحه اصلی اشاره می‌کند (شعبه‌ها، مشاوران و شبکه‌ها) */
-export const NAV_LINKS = [
+ *  مشاوره در انتهای صفحه اصلی اشاره می‌کند (شعبه‌ها، مشاوران و شبکه‌ها).
+ *  بخش‌های همکاری (زیبایی و محصولات) با newTab در تب جدید باز می‌شوند تا
+ *  کاربر در جریان دندانپزشکی باقی بماند. */
+export type NavLink = {
+  href: string;
+  label: string;
+  /** true → لینک با target="_blank" و rel="noopener noreferrer" رندر می‌شود */
+  newTab?: boolean;
+};
+
+export const NAV_LINKS: NavLink[] = [
   { href: "/", label: "خانه" },
   { href: "/about", label: "درباره ما" },
   { href: "/services", label: "خدمات" },
+  { href: "/beauty", label: "خدمات زیبایی", newTab: true },
+  { href: "/products", label: "محصولات", newTab: true },
   { href: "/#contact", label: "تماس و مشاوره" },
-] as const;
+];

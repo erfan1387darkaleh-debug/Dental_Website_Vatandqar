@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { FloatingTelegram } from "@/components/floating-telegram";
 import {
   BRANCHES,
   INSTAGRAM_URL,
@@ -66,6 +67,7 @@ export default function SiteLayout({
         {children}
       </main>
       <SiteFooter />
+      <FloatingTelegram />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

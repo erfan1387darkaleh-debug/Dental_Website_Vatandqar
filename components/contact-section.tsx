@@ -3,6 +3,7 @@ import { InstagramIcon } from "@/components/instagram-icon";
 import { TelegramIcon } from "@/components/telegram-icon";
 import { RubikaIcon } from "@/components/rubika-icon";
 import { ConsultantCard } from "@/components/consultant-card";
+import { DepartmentContactBox } from "@/components/department-contact";
 import {
   BRANCHES,
   CONSULTANTS,
@@ -39,7 +40,12 @@ export function ContactSection() {
           description="برای هماهنگی نوبت، مشاورهٔ دندانپزشکی یا هر پرسش دیگری، با شعبه موردنظرتان تماس بگیرید، با یکی از مشاوران ما صحبت کنید یا از شبکه‌های اجتماعی در ارتباط باشید."
         />
 
+        {/* جعبهٔ مشاورهٔ دندانپزشکی — تلگرام و تماس مستقیم، سرِ دست */}
         <Reveal className="mt-10 lg:mt-12">
+          <DepartmentContactBox department="dental" />
+        </Reveal>
+
+        <Reveal className="mt-6 sm:mt-8">
           <div className="rounded-3xl bg-primary-900 px-6 py-10 sm:px-10 sm:py-12 dark:bg-primary-950 dark:ring-1 dark:ring-white/10">
             {/* معرفی کوتاه */}
             <div className="text-center">

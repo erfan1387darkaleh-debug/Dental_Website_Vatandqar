@@ -7,9 +7,14 @@ import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 import { Container } from "@/components/container";
 
-/** پیش‌نمایش خدمات در صفحه اصلی — چند خدمت منتخب + لینک صفحه کامل */
+/** چهار خدمت منتخب صفحه اصلی — از فهرست واقعی خدمات (data/services.ts) */
+const FEATURED_SERVICE_IDS = ["root-canal", "cosmetic", "scaling", "examination"];
+
+/** پیش‌نمایش خدمات در صفحه اصلی — چهار خدمت منتخب + لینک صفحه کامل */
 export function ServicesSection() {
-  const previewServices = services.slice(0, 6);
+  const previewServices = FEATURED_SERVICE_IDS.map((id) =>
+    services.find((service) => service.id === id),
+  ).filter((service) => service !== undefined);
 
   return (
     <section
@@ -19,12 +24,12 @@ export function ServicesSection() {
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading
           id="services-preview-heading"
-          eyebrow="خدمات"
+          eyebrow="خدمات تخصصی دندانپزشکی"
           title="خدمات دندانپزشکی ما"
           description="از معاینه و پیشگیری تا درمان‌های ترمیمی و زیبایی؛ طیفی از خدمات عمومی دندانپزشکی برای سلامت کامل دهان و دندان شما."
         />
 
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {previewServices.map((service, index) => (
             <Reveal key={service.id} delay={index * 60} className="h-full">
               <ServiceCard service={service} />

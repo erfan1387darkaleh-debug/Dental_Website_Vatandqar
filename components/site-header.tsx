@@ -23,7 +23,7 @@ import { Container } from "@/components/container";
 
 /** لینک‌های ناوبری هدر — همان NAV_LINKS به‌علاوه لینک مستقیم به
  *  سامانهٔ نوبت‌دهی (فوتر فقط از NAV_LINKS استفاده می‌کند) */
-const HEADER_NAV_LINKS: { href: string; label: string }[] = [
+const HEADER_NAV_LINKS: { href: string; label: string; newTab?: boolean }[] = [
   ...NAV_LINKS,
   { href: "/booking", label: "رزرو نوبت" },
 ];
@@ -66,7 +66,7 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-canvas/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-line bg-canvas/70 shadow-[0_1px_0_0_rgb(255_255_255/0.6)_inset] backdrop-blur-xl dark:bg-canvas/60 dark:shadow-none">
       <Container className="flex h-16 items-center justify-between gap-3 lg:h-20">
         {/* لوگو و نام دندانپزشکی */}
         <Link
@@ -96,6 +96,8 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                target={link.newTab ? "_blank" : undefined}
+                rel={link.newTab ? "noopener noreferrer" : undefined}
                 aria-current={active ? "page" : undefined}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                   active
@@ -235,7 +237,7 @@ export function SiteHeader() {
       {menuOpen ? (
         <div
           id="mobile-menu"
-          className="absolute inset-x-0 top-full border-b border-line bg-canvas shadow-xl shadow-slate-900/5 md:hidden dark:shadow-black/30"
+          className="absolute inset-x-0 top-full border-b border-line bg-canvas/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl md:hidden dark:shadow-black/30"
         >
           <nav aria-label="ناوبری موبایل" className="flex flex-col gap-1 px-4 py-4">
             {HEADER_NAV_LINKS.map((link) => {
@@ -245,6 +247,8 @@ export function SiteHeader() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
+                  target={link.newTab ? "_blank" : undefined}
+                  rel={link.newTab ? "noopener noreferrer" : undefined}
                   aria-current={active ? "page" : undefined}
                   className={`rounded-xl px-4 py-3 text-base font-medium transition-colors duration-200 ${
                     active

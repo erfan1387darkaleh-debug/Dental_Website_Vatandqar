@@ -20,7 +20,11 @@ export function SectionHeading({
   return (
     <div className={isCenter ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
       {eyebrow ? (
-        <p className="text-sm font-bold text-accent">{eyebrow}</p>
+        <p className={isCenter ? "flex justify-center" : "flex"}>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-100 bg-tint px-3.5 py-1 text-xs font-bold text-primary-800 shadow-sm dark:border-primary-900 dark:text-primary-200">
+            {eyebrow}
+          </span>
+        </p>
       ) : null}
       <h2
         id={id}

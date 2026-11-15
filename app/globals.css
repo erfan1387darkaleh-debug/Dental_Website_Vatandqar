@@ -17,8 +17,9 @@
     -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
 
   /*
-   * پالت رنگی ملایم و پزشکی (سبزآبی — teal).
-   * رنگ اصلی دکمه‌ها و تاکیدها primary-700 است تا کنتراست کافی با سفید داشته باشد.
+   * پالت رنگی مدرن پزشکی — سبزآبی (teal) به‌عنوان رنگ اصلی و آبی آسمانی
+   * (sky) به‌عنوان جفت گرادیان برند. رنگ اصلی دکمه‌ها و تاکیدها
+   * primary-700 است تا کنتراست کافی با سفید داشته باشد.
    * این پالت در هر دو حالت روشن و تاریک ثابت است (هویت برند).
    */
   --color-primary-50: #f0fdfa;
@@ -64,15 +65,19 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-hover: var(--accent-hover);
+
+  /* جفت گرادیان برند: آبی آسمانی (sky) — در گرادیان‌های هیرو و دکمه اصلی */
+  --color-accent-2: var(--accent-2);
 }
 
-/* حالت روشن — دقیقاً همان رنگ‌های طراحی فعلی */
+/* حالت روشن — پس‌زمینهٔ صفحه slate-50 تمیز؛ سطح کارت‌ها سفید تا با
+ * سایهٔ نرم از پس‌زمینه بلند شوند. بخش‌های متناوب با bg-surface-2 سفیدند. */
 :root {
   color-scheme: light;
 
-  --canvas: #ffffff;
+  --canvas: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
+  --surface-2: #ffffff;
   --tint: #f0fdfa;
 
   --line: #f1f5f9;
@@ -86,6 +91,8 @@
   --accent: #0f766e;
   --accent-strong: #115e59;
   --accent-hover: #134e4a;
+
+  --accent-2: #0284c7;
 }
 
 /*
@@ -111,6 +118,8 @@
   --accent: #2dd4bf;
   --accent-strong: #5eead4;
   --accent-hover: #99f6e4;
+
+  --accent-2: #38bdf8;
 }
 
 /* اسکرول نرم برای لینک‌های داخل صفحه (مثل «تماس با ما») */
