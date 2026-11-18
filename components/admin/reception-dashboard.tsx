@@ -14,12 +14,23 @@ import {
 import { BRANCHES, toPersianDigits } from "@/lib/site-config";
 import { btnPrimary } from "@/lib/styles";
 import { formatJalaliFull, formatTimeFa } from "@/lib/booking/jalali";
-import { appointmentMatchesQuery } from "@/lib/booking/search";
+import { appointmentMatchesQuery, normalizeSearchQuery } from "@/lib/booking/search";
 import { slotTimesForBranchDate } from "@/lib/booking/slots";
 import { useClientToday } from "@/lib/booking/use-client-today";
 import type { TehranDate, TimeOfDay } from "@/lib/booking/time";
 import type { AppointmentRow } from "@/lib/booking/service";
 import { JalaliMonthGrid } from "@/components/booking/jalali-month-grid";
+
+/**
+ * وضعیت جستجوی سراسری کد رهگیری — مستقل از روز انتخابی.
+ * وقتی کد ۶ رقمی در فهرست روز پیدا نشود، سرور همهٔ روزها و شعبه‌ها را
+ * می‌گردد تا نوبتِ روز/شعبهٔ دیگر هم پیدا شود.
+ */
+type TrackingLookup =
+  | { status: "idle" }
+  | { status: "loading"; code: string }
+  | { status: "done"; code: string; rows: AppointmentRow[] }
+  | { status: "error"; code: string; message: string };
 
 /**
  * داشبورد پذیرش — مشاهده، ثبت دستی و حذف نوبت‌ها.
@@ -55,6 +66,10 @@ export function ReceptionDashboard({ username }: { username: string }) {
 
   /** ورودی جستجو — فیلتر زندهٔ فهرست با کد رهگیری/نام/موبایل */
   const [searchQuery, setSearchQuery] = useState("");
+  /** نتیجهٔ جستجوی سراسری کد رهگیری (وقتی در روز انتخابی نباشد) */
+  const [trackingLookup, setTrackingLookup] = useState<TrackingLookup>({
+    status: "idle",
+  });
 
   const determineDate = selectedDate ?? today;
   const gridAnchor = anchor ?? today;
@@ -115,6 +130,75 @@ export function ReceptionDashboard({ username }: { username: string }) {
       cancelled = true;
     };
   }, [refreshList, determineDate]);
+
+  /* ── جستجوی سراسری کد رهگیری (مستقل از روز) ──
+     پذیرش ممکن است کد ۶ رقمی مراجعی را بزند که نوبتش امروز نیست (یا در
+     شعبهٔ دیگر است). اگر کد در فهرست همین روز پیدا نشد، پس از یک وقفهٔ
+     کوتاه سرور همهٔ روزها و هر دو شعبه را می‌گردد و نتیجه همراه با
+     تاریخ و شعبه نمایش داده می‌شود. */
+  const normalizedQuery = normalizeSearchQuery(searchQuery);
+  const trackingQuery = /^[0-9]{6}$/.test(normalizedQuery)
+    ? normalizedQuery
+    : null;
+  const localTrackingMatch =
+    trackingQuery !== null &&
+    rows !== null &&
+    rows.some((row) => row.trackingCode === trackingQuery);
+
+  useEffect(() => {
+    if (trackingQuery === null || rows === null) return;
+    if (rows.some((row) => row.trackingCode === trackingQuery)) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setTrackingLookup({ status: "loading", code: trackingQuery });
+      void (async () => {
+        try {
+          const response = await fetch(
+            `/api/admin/appointments?trackingCode=${encodeURIComponent(trackingQuery)}`,
+            { cache: "no-store", signal: controller.signal },
+          );
+          if (response.status === 401) {
+            redirectToLogin();
+            return;
+          }
+          const data: unknown = await response.json().catch(() => null);
+          if (!response.ok) {
+            setTrackingLookup({
+              status: "error",
+              code: trackingQuery,
+              message: readErrorMessage(
+                data,
+                "جستجوی سراسری کد رهگیری ناموفق بود؛ دوباره تلاش کنید.",
+              ),
+            });
+            return;
+          }
+          const list =
+            data !== null && typeof data === "object"
+              ? (data as { appointments?: unknown }).appointments
+              : null;
+          setTrackingLookup({
+            status: "done",
+            code: trackingQuery,
+            rows: Array.isArray(list) ? (list as AppointmentRow[]) : [],
+          });
+        } catch {
+          if (controller.signal.aborted) return;
+          setTrackingLookup({
+            status: "error",
+            code: trackingQuery,
+            message: "اتصال ناموفق بود؛ دوباره تلاش کنید.",
+          });
+        }
+      })();
+    }, 350);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trackingQuery, rows, redirectToLogin]);
 
   async function createAppointment() {
     if (!determineDate || formTime === "") return;
@@ -215,6 +299,13 @@ export function ReceptionDashboard({ username }: { username: string }) {
   const bookedTimes = new Set((rows ?? []).map((row) => row.time));
   /** فیلتر زنده — نوبت‌های خوانده‌شدهٔ روز با ورودی جستجوی پذیرش */
   const isFiltering = searchQuery.trim() !== "";
+  /** جستجو با کد ۶ رقمی که در فهرست همین روز پیدا نشده است */
+  const isTrackingSearch = trackingQuery !== null && !localTrackingMatch;
+  /** نتیجهٔ متناظر با همین کد؛ نتیجهٔ کدِ قبلی هرگز نمایش داده نمی‌شود */
+  const trackingDisplay =
+    trackingLookup.status !== "idle" && trackingLookup.code === trackingQuery
+      ? trackingLookup
+      : null;
   const visibleRows =
     rows === null
       ? null
@@ -368,11 +459,103 @@ export function ReceptionDashboard({ username }: { username: string }) {
                 type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="جستجو با کد رهگیری یا نام بیمار…"
+                placeholder="جستجو با کد رهگیری (همهٔ روزها) یا نام بیمار…"
                 className="w-full rounded-xl border border-line-strong bg-canvas pe-3 ps-9 py-2.5 text-sm text-heading transition-colors duration-200 focus:border-primary-400 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
               />
             </div>
           </div>
+
+          {/* نتیجهٔ جستجوی سراسری کد رهگیری — وقتی کد در فهرست همین روز
+              نیست، نوبتِ روز یا شعبهٔ دیگر اینجا با تاریخ و شعبه نمایش
+              داده می‌شود تا پذیرش بی‌درنگ متوجه اشتباه روز/شعبه شود. */}
+          {isTrackingSearch ? (
+            <div
+              className="mt-3 rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs dark:border-sky-900/50 dark:bg-sky-950/30"
+              aria-live="polite"
+            >
+              {trackingDisplay === null ||
+              trackingDisplay.status === "loading" ? (
+                <p className="flex items-center gap-2 text-subtle">
+                  <LoaderCircle
+                    className="h-3.5 w-3.5 animate-spin"
+                    aria-hidden="true"
+                  />
+                  {`در حال جستجوی کد ${trackingQuery} در همهٔ روزها و شعبه‌ها…`}
+                </p>
+              ) : trackingDisplay.status === "error" ? (
+                <p
+                  className="font-bold text-red-600 dark:text-red-400"
+                  role="alert"
+                >
+                  {trackingDisplay.message}
+                </p>
+              ) : trackingDisplay.rows.length === 0 ? (
+                <p className="text-subtle">
+                  {`نوبتی با کد رهگیری ${trackingQuery} در هیچ روزی ثبت نشده است.`}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="font-bold text-heading">
+                    این کد در نوبت‌های روز انتخابی نیست؛ نتیجهٔ جستجوی سراسری:
+                  </p>
+                  <ul className="grid gap-2">
+                    {trackingDisplay.rows.map((row) => {
+                      const branchName =
+                        BRANCHES.find((branch) => branch.id === row.branchId)
+                          ?.name ?? row.branchId;
+                      const isAnotherDay = row.date !== determineDate;
+                      return (
+                        <li
+                          key={row.id}
+                          className="rounded-lg border border-line-strong bg-surface px-3 py-2.5"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-heading">
+                                {row.patientName}
+                              </span>
+                              <span
+                                dir="ltr"
+                                title="کد رهگیری نوبت"
+                                className="rounded-md bg-tint px-1.5 py-0.5 font-extrabold text-primary-800 dark:text-primary-200"
+                              >
+                                {row.trackingCode}
+                              </span>
+                              <span dir="ltr" className="text-subtle">
+                                {toPersianDigits(row.patientPhone)}
+                              </span>
+                            </div>
+                            {isAnotherDay ? (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                                روز دیگر
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-subtle">
+                            <span>{`شعبه ${branchName}`}</span>
+                            <span>{formatJalaliFull(row.date)}</span>
+                            <span>{`ساعت ${formatTimeFa(row.time)}`}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBranchId(row.branchId);
+                                setAnchor(row.date);
+                                setSelectedDate(row.date);
+                                setSearchQuery("");
+                              }}
+                              className="rounded-lg border border-primary-200 px-2.5 py-1 font-bold text-primary-800 transition-colors duration-200 hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 dark:border-primary-800 dark:text-primary-200 dark:focus-visible:outline-primary-300"
+                            >
+                              رفتن به این روز
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : null}
 
           {determineDate && rows !== null && totalSlots > 0 ? (
             <p className="mt-2 text-xs text-subtle">
@@ -381,7 +564,10 @@ export function ReceptionDashboard({ username }: { username: string }) {
               {toPersianDigits(String(Math.max(totalSlots - bookedCount, 0)))}
             </p>
           ) : null}
-          {isFiltering && rows !== null && rows.length > 0 ? (
+          {isFiltering &&
+          rows !== null &&
+          rows.length > 0 &&
+          (trackingQuery === null || localTrackingMatch) ? (
             <p className="mt-1 text-xs text-subtle" aria-live="polite">
               نتیجهٔ جستجو: {toPersianDigits(String(visibleRows?.length ?? 0))} از{" "}
               {toPersianDigits(String(rows.length))} نوبت
@@ -404,18 +590,20 @@ export function ReceptionDashboard({ username }: { username: string }) {
               >
                 {listError}
               </p>
-            ) : rows !== null && rows.length === 0 ? (
+            ) : rows !== null && rows.length === 0 && !isTrackingSearch ? (
               <p className="py-6 text-sm text-subtle">
                 {totalSlots === 0
                   ? "شعبه در این روز تعطیل است."
                   : "نوبتی در این روز ثبت نشده است."}
               </p>
-            ) : visibleRows !== null && visibleRows.length === 0 ? (
+            ) : visibleRows !== null &&
+              visibleRows.length === 0 &&
+              !isTrackingSearch ? (
               <p className="py-6 text-sm text-subtle">
                 نوبتی با این جستجو یافت نشد؛ کد رهگیری، نام یا شمارهٔ دیگری را
                 بیازمایید.
               </p>
-            ) : visibleRows !== null ? (
+            ) : visibleRows !== null && visibleRows.length > 0 ? (
               <ul className="grid gap-2">
                 {visibleRows.map((row) => (
                   <li

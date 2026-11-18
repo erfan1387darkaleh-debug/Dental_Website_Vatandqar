@@ -75,6 +75,7 @@ import {
   createStaffBooking,
   deleteAppointment,
   getAvailabilityForDays,
+  listAppointmentsByTrackingCode,
   listDayAppointments,
 } from "../lib/booking/service";
 import { appointments } from "../lib/booking/schema";
@@ -877,6 +878,83 @@ async function main(): Promise<void> {
       "2026-13-40",
     );
     expectErrorCode(result, "invalid_date", "تاریخ نامعتبر");
+  });
+
+  /* ── جستجوی سراسری کد رهگیری (پذیرش) ── */
+
+  test("جستجوی سراسری کد رهگیری: مستقل از روز و محدودپذیر به شعبه", async () => {
+    const first = unwrap(
+      await createStaffBooking(
+        { db },
+        "reception",
+        {
+          branchId: "hediye-yousef",
+          date: "2024-05-06",
+          time: "09:00",
+          patientName: "بیمار سراسری یک",
+          patientPhone: "09121230001",
+        },
+        { generateTrackingCode: () => "777001" },
+      ),
+      "ثبت نوبت سراسری یک",
+    );
+    const second = unwrap(
+      await createStaffBooking(
+        { db },
+        "reception",
+        {
+          branchId: "vatandar",
+          date: "2024-05-07",
+          time: "10:30",
+          patientName: "بیمار سراسری دو",
+          patientPhone: "09121230002",
+        },
+        { generateTrackingCode: () => "777002" },
+      ),
+      "ثبت نوبت سراسری دو",
+    );
+
+    // بدون شعبه: هر دو شعبه و همهٔ روزها جستجو می‌شوند
+    const anywhere = unwrap(
+      await listAppointmentsByTrackingCode({ db }, "777001"),
+      "جستجوی سراسری بدون شعبه",
+    );
+    assert.equal(anywhere.length, 1);
+    assert.equal(anywhere[0]?.branchId, "hediye-yousef");
+    assert.equal(anywhere[0]?.date, "2024-05-06");
+    assert.equal(anywhere[0]?.time, "09:00");
+
+    // محدود به شعبه: نوبت شعبهٔ دیگر در این دامنه پیدا نمی‌شود
+    assert.equal(
+      unwrap(
+        await listAppointmentsByTrackingCode({ db }, "777001", "vatandar"),
+        "جستجوی محدود به شعبه",
+      ).length,
+      0,
+    );
+    const scoped = unwrap(
+      await listAppointmentsByTrackingCode({ db }, "777002", "vatandar"),
+      "جستجوی شعبهٔ دوم",
+    );
+    assert.equal(scoped.length, 1);
+    assert.equal(scoped[0]?.patientName, "بیمار سراسری دو");
+    assert.equal(scoped[0]?.date, "2024-05-07");
+
+    // کد نامعتبر/کوتاه و شعبهٔ ناموجود خطای صریح می‌دهند
+    expectErrorCode(
+      await listAppointmentsByTrackingCode({ db }, "77700"),
+      "invalid_tracking_code",
+      "کد کوتاه",
+    );
+    expectErrorCode(
+      await listAppointmentsByTrackingCode({ db }, "777001", "missing-branch"),
+      "invalid_branch",
+      "شعبهٔ ناموجود در جستجوی کد",
+    );
+
+    // پاک‌سازی (شمارش پنجرهٔ یادآوری آزمون‌های بعدی)
+    unwrap(await deleteAppointment({ db }, first.id), "پاک‌سازی سراسری یک");
+    unwrap(await deleteAppointment({ db }, second.id), "پاک‌سازی سراسری دو");
   });
 
   /* ── موجودی ساعات ── */

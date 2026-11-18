@@ -29,6 +29,7 @@ import { getBookingBranch, isBranchOpenOnDate, slotInstantUtcMs, slotTimesForBra
 import { normalizeIranMobile } from "./phone";
 import {
   generateTrackingCode,
+  isValidTrackingCode,
   type TrackingCodeGenerator,
 } from "./tracking";
 import { appointments } from "./schema";
@@ -46,6 +47,7 @@ export type BookingErrorCode =
   | "horizon"
   | "invalid_name"
   | "invalid_phone"
+  | "invalid_tracking_code"
   | "slot_taken"
   | "not_found";
 
@@ -65,6 +67,7 @@ export const BOOKING_ERROR_MESSAGES: Record<BookingErrorCode, string> = {
   invalid_name: "لطفاً نام و نام خانوادگی معتبر وارد کنید.",
   invalid_phone:
     "شمارهٔ موبایل معتبر نیست؛ قالب درست: ۰۹۱۲۱۲۳۴۵۶۷",
+  invalid_tracking_code: "کد رهگیری باید یک عدد ۶ رقمی باشد.",
   slot_taken:
     "این نوبت خالی هم‌اکنون ثبت شد؛ لطفاً ساعت دیگری انتخاب کنید.",
   not_found: "نوبت موردنظر یافت نشد یا حذف شده است.",
@@ -461,6 +464,47 @@ function dayRange(date: TehranDate): { startMs: number; endMs: number } {
   return { startMs, endMs: startMs + 24 * 60 * 60 * 1000 };
 }
 
+/** ستون‌های مشترک ردیف نوبت در پرس‌وجوهای پنل پذیرش */
+const APPOINTMENT_ROW_COLUMNS = {
+  id: appointments.id,
+  branchId: appointments.branchId,
+  startsAtUtc: appointments.startsAtUtc,
+  patientName: appointments.patientName,
+  patientPhone: appointments.patientPhone,
+  source: appointments.source,
+  createdBy: appointments.createdBy,
+  trackingCode: appointments.trackingCode,
+} as const;
+
+/** ردیف خام انتخاب‌شده از پایگاه‌داده */
+type AppointmentDbRow = {
+  id: string;
+  branchId: string;
+  startsAtUtc: Date;
+  patientName: string;
+  patientPhone: string;
+  source: string;
+  createdBy: string | null;
+  trackingCode: string;
+};
+
+/** نگاشت ردیف پایگاه‌داده به ردیف پنل (تاریخ و ساعت تهران) */
+function toAppointmentRow(row: AppointmentDbRow): AppointmentRow {
+  const tehranParts = tehranDateTimeParts(row.startsAtUtc.getTime());
+  return {
+    id: row.id,
+    branchId: row.branchId,
+    date: tehranParts.date,
+    time: tehranParts.time,
+    startsAtUtc: row.startsAtUtc.toISOString(),
+    patientName: row.patientName,
+    patientPhone: row.patientPhone,
+    source: row.source as "public" | "staff",
+    createdBy: row.createdBy,
+    trackingCode: row.trackingCode,
+  };
+}
+
 /** فهرست نوبت‌های یک شعبه در یک روز (مرتب بر حسب ساعت) */
 export async function listDayAppointments(
   ctx: Pick<DbContext, "db">,
@@ -472,17 +516,7 @@ export async function listDayAppointments(
   const { startMs, endMs } = dayRange(date);
   try {
     const rows = await db
-      .select({
-        id: appointments.id,
-        branchId: appointments.branchId,
-        startsAtUtc: appointments.startsAtUtc,
-        patientName: appointments.patientName,
-        patientPhone: appointments.patientPhone,
-        source: appointments.source,
-        createdBy: appointments.createdBy,
-        trackingCode: appointments.trackingCode,
-        createdAt: appointments.createdAt,
-      })
+      .select(APPOINTMENT_ROW_COLUMNS)
       .from(appointments)
       .where(
         and(
@@ -492,25 +526,50 @@ export async function listDayAppointments(
         ),
       );
     const mapped: AppointmentRow[] = rows
-      .map((row) => {
-        const tehranParts = tehranDateTimeParts(row.startsAtUtc.getTime());
-        return {
-          id: row.id,
-          branchId: row.branchId,
-          date: tehranParts.date,
-          time: tehranParts.time,
-          startsAtUtc: row.startsAtUtc.toISOString(),
-          patientName: row.patientName,
-          patientPhone: row.patientPhone,
-          source: row.source as "public" | "staff",
-          createdBy: row.createdBy,
-          trackingCode: row.trackingCode,
-        };
-      })
+      .map(toAppointmentRow)
       .sort((a, b) => a.time.localeCompare(b.time));
     return { ok: true, value: mapped };
   } catch (error) {
     console.error("[booking] خواندن نوبت‌های روز ناموفق بود:", error);
+    return invalid("db_error");
+  }
+}
+
+/**
+ * جستجوی سراسری نوبت با کد رهگیری — مستقل از روز.
+ * پذیرش وقتی مراجع با کد ۶ رقمی می‌آید ولی نوبتش در روز انتخابی نیست،
+ * از این مسیر همهٔ روزها (و در صورت ندادن شعبه، هر دو شعبه) را می‌گردد
+ * تا اگر بیمار در روز یا شعبهٔ دیگری نوبت دارد، بی‌درنگ پیدا شود.
+ */
+export async function listAppointmentsByTrackingCode(
+  ctx: Pick<DbContext, "db">,
+  trackingCode: string,
+  branchId?: string | null,
+): Promise<ServiceResult<AppointmentRow[]>> {
+  if (!isValidTrackingCode(trackingCode)) {
+    return invalid("invalid_tracking_code");
+  }
+  if (branchId && !getBookingBranch(branchId)) {
+    return invalid("invalid_branch");
+  }
+  try {
+    const rows = await ctx.db
+      .select(APPOINTMENT_ROW_COLUMNS)
+      .from(appointments)
+      .where(
+        branchId
+          ? and(
+              eq(appointments.trackingCode, trackingCode),
+              eq(appointments.branchId, branchId),
+            )
+          : eq(appointments.trackingCode, trackingCode),
+      );
+    const mapped = rows
+      .map(toAppointmentRow)
+      .sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc));
+    return { ok: true, value: mapped };
+  } catch (error) {
+    console.error("[booking] جستجوی سراسری کد رهگیری ناموفق بود:", error);
     return invalid("db_error");
   }
 }

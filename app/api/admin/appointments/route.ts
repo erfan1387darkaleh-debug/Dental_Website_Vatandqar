@@ -1,11 +1,13 @@
 /**
  * نوبت‌های پنل پذیرش — /api/admin/appointments
  *
- *   GET    ?branch=&date=     فهرست نوبت‌های یک شعبه در یک روز
+ *   GET    ?branch=&date=            فهرست نوبت‌های یک شعبه در یک روز
+ *   GET    ?trackingCode=&branch=     جستجوی سراسری کد رهگیری (همهٔ روزها؛
+ *                                     branch خالی/«all» یعنی هر دو شعبه)
  *   POST   {branchId,date,time,patientName,patientPhone}  ثبت دستی نوبت (به نام پذیرش)
- *   DELETE ?id=<uuid>         حذف نوبت
+ *   DELETE ?id=<uuid>                 حذف نوبت
  *
- * هر سه مسیر پیش از هر کاری توکن نشست پذیرش را سمت سرور سنجیده و در
+ * همهٔ مسیرها پیش از هر کاری توکن نشست پذیرش را سمت سرور سنجیده و در
  * صورت نبودن اعتبار، ۴۰۱ می‌دهند — مجوز از رابط کاربری و از مسیرهای
  * عمومی (/api/booking/*) به‌هیچ‌شکل قابل دورزدن نیست.
  */
@@ -22,10 +24,12 @@ import {
   SESSION_COOKIE_NAME,
   verifySessionToken,
 } from "@/lib/booking/auth";
+import { toLatinDigits } from "@/lib/booking/search";
 import { getBookingBranch } from "@/lib/booking/slots";
 import {
   createStaffBooking,
   deleteAppointment,
+  listAppointmentsByTrackingCode,
   listDayAppointments,
   type BookingInput,
 } from "@/lib/booking/service";
@@ -46,9 +50,43 @@ export async function GET(request: NextRequest) {
     );
   }
   const params = request.nextUrl.searchParams;
-  const branchId = params.get("branch") ?? "";
+  const branchParam = params.get("branch") ?? "";
+
+  // حالت ۱ — جستجوی سراسری با کد رهگیری، مستقل از روز. اگر branch خالی
+  // یا «all» باشد، هر دو شعبه جستجو می‌شود تا نوبتِ روز/شعبهٔ دیگر هم
+  // پیدا شود.
+  const trackingCodeParam = params.get("trackingCode");
+  if (trackingCodeParam !== null && trackingCodeParam.trim() !== "") {
+    const trackingCode = toLatinDigits(trackingCodeParam.trim());
+    if (!/^[0-9]{6}$/.test(trackingCode)) {
+      return bookingErrorResponse("invalid_tracking_code");
+    }
+    if (
+      branchParam !== "" &&
+      branchParam !== "all" &&
+      !getBookingBranch(branchParam)
+    ) {
+      return bookingErrorResponse("invalid_branch");
+    }
+    const db = getBookingDb();
+    if (!db) return bookingErrorResponse("db_unavailable");
+    const scopedBranch =
+      branchParam === "" || branchParam === "all" ? null : branchParam;
+    const result = await listAppointmentsByTrackingCode(
+      { db },
+      trackingCode,
+      scopedBranch,
+    );
+    if (!result.ok) return bookingErrorResponse(result.error);
+    return NextResponse.json(
+      { appointments: result.value, scope: "tracking" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  // حالت ۲ — فهرست نوبت‌های یک روز.
   const date = params.get("date") ?? "";
-  if (!isValidTehranDate(date) || !getBookingBranch(branchId)) {
+  if (!isValidTehranDate(date) || !getBookingBranch(branchParam)) {
     return bookingErrorResponse(
       isValidTehranDate(date) ? "invalid_branch" : "invalid_date",
     );
@@ -57,7 +95,7 @@ export async function GET(request: NextRequest) {
   const db = getBookingDb();
   if (!db) return bookingErrorResponse("db_unavailable");
 
-  const result = await listDayAppointments({ db }, branchId, date);
+  const result = await listDayAppointments({ db }, branchParam, date);
   if (!result.ok) return bookingErrorResponse(result.error);
   return NextResponse.json(
     { appointments: result.value },
