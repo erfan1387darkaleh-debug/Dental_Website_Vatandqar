@@ -24,7 +24,7 @@ export function HomeBackground() {
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <Image
         src="/images/dental-unit-bg.png"
-        alt="ست دندانپزشکی مدرن؛ صندلی برقی با چراغ معاینه، هندپیس‌ها و مانیتور"
+        alt="یونیت دندانپزشکی مدرن؛ صندلی برقی آبی، چراغ معاینهٔ سقفی، هندپیس‌ها و پنل کنترل"
         fill
         priority
         sizes="100vw"
