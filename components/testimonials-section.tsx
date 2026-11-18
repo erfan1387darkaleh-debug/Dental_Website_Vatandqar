@@ -88,10 +88,7 @@ export function TestimonialsSection() {
   const hasApproved = (rows?.length ?? 0) > 0;
 
   return (
-    <section
-      aria-labelledby="testimonials-heading"
-      className="bg-surface-2"
-    >
+    <section aria-labelledby="testimonials-heading">
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading
           id="testimonials-heading"
@@ -147,7 +144,7 @@ export function TestimonialsSection() {
 function TestimonialCard({ testimonial }: { testimonial: TestimonialRecord }) {
   const date = tehranDateTimeParts(Date.parse(testimonial.createdAt)).date;
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface p-6">
+    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface-2/85 p-6 backdrop-blur-md">
       <div className="flex items-start justify-between gap-3">
         <Quote className="h-6 w-6 shrink-0 text-primary-200 dark:text-primary-800" aria-hidden="true" />
         <RatingStars rating={testimonial.rating} />
@@ -236,7 +233,7 @@ function TestimonialForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form
-      className="mx-auto grid max-w-2xl gap-4 rounded-2xl border border-line-strong bg-surface p-6 text-start"
+      className="mx-auto grid max-w-2xl gap-4 rounded-2xl border border-line-strong bg-surface-2/85 p-6 text-start backdrop-blur-md"
       onSubmit={(event) => {
         event.preventDefault();
         if (!pending) void submit();

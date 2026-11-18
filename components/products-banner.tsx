@@ -10,10 +10,7 @@ import { Container } from "@/components/container";
  */
 export function ProductsBanner() {
   return (
-    <section
-      aria-labelledby="products-banner-heading"
-      className="bg-canvas"
-    >
+    <section aria-labelledby="products-banner-heading">
       <Container className="py-4 sm:py-6">
         <div className="relative overflow-hidden rounded-3xl border border-amber-100 bg-linear-to-l from-amber-50/90 via-orange-50/70 to-amber-50/90 p-6 shadow-soft sm:p-8 dark:border-amber-900/40 dark:from-amber-950/25 dark:via-orange-950/20 dark:to-amber-950/25">
           {/* درخشش بسیار ملایم در لبهٔ کارت — هماهنگ با سلیقهٔ مینیمال سایت */}

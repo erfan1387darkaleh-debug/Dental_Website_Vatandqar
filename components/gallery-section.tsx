@@ -74,7 +74,7 @@ export function GallerySection() {
     <section
       id="gallery"
       aria-labelledby="gallery-heading"
-      className="scroll-mt-20 bg-surface-2"
+      className="scroll-mt-20"
     >
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading
@@ -134,7 +134,7 @@ export function GallerySection() {
 /** کارت نمایش یک نمونهٔ قبل و بعد */
 function GalleryCard({ galleryCase }: { galleryCase: PublicGalleryCase }) {
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface p-4 sm:p-5">
+    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface-2/85 p-4 backdrop-blur-md sm:p-5">
       <BeforeAfterSlider
         title={galleryCase.title}
         beforeUrl={galleryCase.beforeImageUrl}

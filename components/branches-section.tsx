@@ -10,7 +10,7 @@ export function BranchesSection() {
     <section
       id="branches"
       aria-labelledby="branches-heading"
-      className="scroll-mt-20 bg-canvas"
+      className="scroll-mt-20"
     >
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading

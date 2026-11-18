@@ -17,10 +17,7 @@ export function ServicesSection() {
   ).filter((service) => service !== undefined);
 
   return (
-    <section
-      aria-labelledby="services-preview-heading"
-      className="bg-surface-2"
-    >
+    <section aria-labelledby="services-preview-heading">
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading
           id="services-preview-heading"

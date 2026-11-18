@@ -11,7 +11,7 @@ type ServiceCardProps = {
 /** کارت نمایش یک خدمت دندانپزشکی */
 export function ServiceCard({ service, showPoints = false }: ServiceCardProps) {
   return (
-    <article className="group flex h-full flex-col rounded-2xl border border-line-strong bg-surface p-6 transition duration-300 hover:-translate-y-1.5 hover:border-primary-300 hover:shadow-2xl hover:shadow-primary-900/10 dark:hover:border-primary-700 dark:hover:shadow-black/30">
+    <article className="group flex h-full flex-col rounded-2xl border border-line-strong bg-surface-2/85 p-6 backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:border-primary-300 hover:shadow-2xl hover:shadow-primary-900/10 dark:hover:border-primary-700 dark:hover:shadow-black/30">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-bl from-tint to-sky-100/70 text-accent transition-colors duration-300 group-hover:from-primary-700 group-hover:to-blue-600 group-hover:text-white dark:from-primary-950/60 dark:to-sky-950/40 dark:group-hover:from-primary-600 dark:group-hover:to-accent-2">
         <ServiceIcon name={service.icon} />
       </div>

@@ -14,10 +14,7 @@ import { btnTextLink } from "@/lib/styles";
  */
 export function QuickBookingSection() {
   return (
-    <section
-      aria-labelledby="quick-booking-heading"
-      className="bg-surface-2"
-    >
+    <section aria-labelledby="quick-booking-heading">
       <Container className="py-16 sm:py-20 lg:py-24">
         <SectionHeading
           id="quick-booking-heading"
@@ -32,7 +29,7 @@ export function QuickBookingSection() {
             aria-hidden="true"
             className="absolute -inset-4 rounded-[2.5rem] bg-linear-to-l from-primary-100/80 to-sky-100/80 blur-xl sm:-inset-6 dark:from-primary-900/40 dark:to-sky-900/30"
           />
-          <div className="relative rounded-3xl border border-line-strong bg-surface p-4 shadow-soft sm:p-6">
+          <div className="relative rounded-3xl border border-line-strong bg-surface-2/85 p-4 shadow-soft backdrop-blur-md sm:p-6">
             {/* چون ?branch= در مؤلفهٔ خوانندهٔ پارامترها خوانده می‌شود، مرز Suspense الزامی است */}
             <Suspense fallback={<WizardFallback />}>
               <BookingWizard />

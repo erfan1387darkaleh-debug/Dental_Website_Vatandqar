@@ -11,7 +11,7 @@ import { Container } from "@/components/container";
 /** پیش‌نمایش «درباره ما» در صفحه اصلی */
 export function AboutSection() {
   return (
-    <section aria-labelledby="about-preview-heading" className="bg-canvas">
+    <section aria-labelledby="about-preview-heading">
       <Container className="py-16 sm:py-20 lg:py-24">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div>

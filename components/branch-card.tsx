@@ -14,7 +14,7 @@ type BranchCardProps = {
 /** کارت نمایش یک شعبه — نام، منطقه، نشانی، تلفن، ساعات کاری و دکمه تماس */
 export function BranchCard({ branch }: BranchCardProps) {
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface p-6 transition duration-300 hover:border-primary-200 hover:shadow-lg hover:shadow-primary-900/5 dark:hover:border-primary-800 sm:grid sm:row-span-5 sm:grid-rows-subgrid">
+    <article className="flex h-full flex-col rounded-2xl border border-line-strong bg-surface-2/85 p-6 backdrop-blur-md transition duration-300 hover:border-primary-200 hover:shadow-lg hover:shadow-primary-900/5 dark:hover:border-primary-800 sm:grid sm:row-span-5 sm:grid-rows-subgrid">
       {/* سربرگ کارت: نام شعبه و برچسب منطقه */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

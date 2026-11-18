@@ -52,7 +52,7 @@ export function HeroSection() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative overflow-hidden bg-canvas"
+      className="relative overflow-hidden"
     >
       {/* هاله‌های شعاعی بسیار ملایم برند — عمقِ حداقلی، عمداً کم‌رنگ */}
       <div
