@@ -780,9 +780,10 @@ export function ReceptionDashboard({ username }: { username: string }) {
               </label>
               <input
                 id="admin-create-phone"
-                type="text"
+                type="tel"
                 dir="ltr"
                 inputMode="tel"
+                autoComplete="tel"
                 maxLength={20}
                 required
                 placeholder="09121234567"
