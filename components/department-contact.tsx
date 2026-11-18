@@ -7,8 +7,10 @@ import {
 import { btnBeauty, btnGradient, btnProducts } from "@/lib/styles";
 import { ToothIcon } from "@/components/tooth-icon";
 
-/** رنگ و دکمهٔ اختصاصی هر بخش — دندانپزشکی سبزآبی، زیبایی رز، محصولات کهربایی */
-const DEPT_STYLES = {
+/** رنگ و دکمهٔ اختصاصی هر بخش — دندانپزشکی سبزآبی، زیبایی رز، محصولات کهربایی.
+ *  هدر اختصاصی هر بخش (components/department-header.tsx) هم از این جدول
+ *  استفاده می‌کند تا رنگ برند هر حوزه در کل سایت یکدست بماند. */
+export const DEPT_STYLES = {
   dental: {
     tile: "bg-linear-to-bl from-primary-600 to-accent-2",
     btn: btnGradient,

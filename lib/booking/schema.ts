@@ -36,6 +36,12 @@ export const appointments = pgTable(
     patientName: varchar("patient_name", { length: 80 }).notNull(),
     /** شمارهٔ موبایل نرمال‌شده (09xxxxxxxxx) */
     patientPhone: varchar("patient_phone", { length: 11 }).notNull(),
+    /**
+     * کد رهگیری ۶ رقمیِ انسانی برای یافتنِ سریع نوبت در پذیرش (مثال: 849210).
+     * تولید تصادفی در سرویس با بازتلاش روی برخورد؛ یکتایی نهایی را
+     * قید یکتای پایگاه‌داده تضمین می‌کند.
+     */
+    trackingCode: varchar("tracking_code", { length: 6 }).notNull(),
     /** «public» = رزرو آنلاین مراجع، «staff» = ثبت دستی پذیرش */
     source: varchar("source", { length: 8 }).notNull().default("public"),
     /** وضعیت نوبت؛ پیش‌فرض «تأییدشده» — «cancelled» برای لغو نرم آینده */
@@ -56,6 +62,9 @@ export const appointments = pgTable(
       table.branchId,
       table.startsAtUtc,
     ),
+    // کد رهگیری در سراسر جدول یکتاست؛ برخورد (23505) در سرویس با تولید
+    // کد تازه و درج دوباره حل می‌شود
+    uniqueIndex("appointments_tracking_code_uq").on(table.trackingCode),
     // پرس‌وجوی پنجرهٔ یادآوری کرون (بازهٔ starts_at_utc)
     index("appointments_starts_at_idx").on(table.startsAtUtc),
     check(
@@ -73,6 +82,10 @@ export const appointments = pgTable(
     check(
       "appointments_phone_format",
       sql`${table.patientPhone} ~ '^09[0-9]{9}$'`,
+    ),
+    check(
+      "appointments_tracking_code_format",
+      sql`${table.trackingCode} ~ '^[1-9][0-9]{5}$'`,
     ),
     check(
       "appointments_duration_fixed",

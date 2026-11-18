@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CalendarDays,
+  Check,
   CheckCircle2,
+  Copy,
   LoaderCircle,
   MapPin,
   Phone,
@@ -514,6 +516,20 @@ function BookingConfirmation({
   telHref,
   onBookAgain,
 }: BookingConfirmationProps) {
+  /** وضعیت کپی کد رهگیری — بازخورد لحظه‌ای دکمهٔ «کپی کد رهگیری» */
+  const [copied, setCopied] = useState(false);
+
+  async function copyTrackingCode() {
+    try {
+      await navigator.clipboard.writeText(result.trackingCode);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // کپی همیشه ممکن نیست (مثلاً بدون اجازهٔ کلیپ‌بورد)؛ کد همچنان
+      // برجسته نمایش داده می‌شود و مراجع می‌تواند یادداشت کند.
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-primary-200 bg-tint p-6 text-center sm:p-8 dark:border-primary-800">
       <CheckCircle2
@@ -556,9 +572,35 @@ function BookingConfirmation({
           </dd>
         </div>
       </dl>
+      {/* کد رهگیری — برجسته، با دکمهٔ کپیِ یک‌کلیکی برای نشان‌دادن به پذیرش */}
+      <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-primary-200 bg-surface p-4 text-start dark:border-primary-800">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-subtle">کد رهگیری نوبت</p>
+            <p
+              dir="ltr"
+              className="mt-1 truncate text-left text-2xl font-extrabold tracking-[0.25em] text-primary-800 dark:text-primary-200"
+            >
+              {result.trackingCode}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void copyTrackingCode()}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-line-strong bg-surface px-3 py-2 text-xs font-bold text-heading transition-colors duration-200 hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            {copied ? "کپی شد" : "کپی کد رهگیری"}
+          </button>
+        </div>
+      </div>
       <p className="mx-auto mt-4 max-w-sm text-xs leading-6 text-muted">
-        اطلاعات نوبت را برای روز مراجعه یادداشت کنید. برای تغییر یا لغو نوبت
-        فقط با تلفن شعبه هماهنگ کنید.
+        کد رهگیری را یادداشت یا اسکرین‌شات کنید و در روز مراجعه به پذیرش نشان
+        دهید. برای تغییر یا لغو نوبت فقط با تلفن شعبه هماهنگ کنید.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <a href={telHref} className={btnPrimary}>

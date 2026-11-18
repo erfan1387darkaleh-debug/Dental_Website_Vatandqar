@@ -40,6 +40,16 @@ import {
 } from "../lib/booking/jalali";
 import { normalizeIranMobile } from "../lib/booking/phone";
 import {
+  appointmentMatchesQuery,
+  normalizeSearchQuery,
+  toLatinDigits,
+} from "../lib/booking/search";
+import {
+  TRACKING_CODE_PATTERN,
+  generateTrackingCode,
+  isValidTrackingCode,
+} from "../lib/booking/tracking";
+import {
   buildAppointmentReminderText,
   buildBookingConfirmationText,
   maskPhone,
@@ -252,6 +262,67 @@ test("نرمال‌سازی موبایل ایران در سمت سرور", () =>
   }
 });
 
+/* ─────────────── تست‌های کد رهگیری و جستجو (محاسبهٔ خالص) ─────────────── */
+
+test("کد رهگیری: قالب و اعتبارسنجی (شش رقم بدون صفر آغازین)", () => {
+  assert.equal(isValidTrackingCode("849210"), true);
+  assert.equal(isValidTrackingCode("100000"), true);
+  assert.equal(isValidTrackingCode("999999"), true);
+  assert.equal(isValidTrackingCode("049210"), false); // صفر آغازین
+  assert.equal(isValidTrackingCode("84921"), false); // کوتاه
+  assert.equal(isValidTrackingCode("8492101"), false); // بلند
+  assert.equal(isValidTrackingCode("A49210"), false); // حرف
+  assert.equal(isValidTrackingCode(""), false);
+  assert.equal(isValidTrackingCode(null), false);
+  assert.equal(isValidTrackingCode(undefined), false);
+  assert.equal(isValidTrackingCode(849210), false); // رشتهٔ معتبر لازم است
+  // مولد: ۲۰۰ نمونه همگی مطابق قالب
+  for (let index = 0; index < 200; index += 1) {
+    const code = generateTrackingCode();
+    assert.ok(TRACKING_CODE_PATTERN.test(code), `کد تولیدی ناروا: ${code}`);
+  }
+});
+
+test("جستجو: نرمال‌سازی ارقام فارسی/عربی و فاصله‌ها", () => {
+  assert.equal(toLatinDigits("۸۴۹۲"), "8492");
+  assert.equal(toLatinDigits("٠٩١٢"), "0912");
+  assert.equal(toLatinDigits("الف ۹ ب"), "الف 9 ب");
+  assert.equal(normalizeSearchQuery("  علی   رضایی "), "علی رضایی");
+  assert.equal(normalizeSearchQuery("۸۴۹۲۱۰"), "849210");
+  assert.equal(normalizeSearchQuery(""), "");
+});
+
+test("جستجو: تطبیق کد رهگیری/نام/موبایل با حساسیت‌زدایی و زیررشته", () => {
+  const row = {
+    trackingCode: "849210",
+    patientName: "علی رضایی",
+    patientPhone: "09121234567",
+  };
+  // کد رهگیری — کامل، با ارقام فارسی، با فاصله و ناقص
+  assert.equal(appointmentMatchesQuery(row, "849210"), true);
+  assert.equal(appointmentMatchesQuery(row, "  ۸۴۹۲۱۰  "), true);
+  assert.equal(appointmentMatchesQuery(row, "8492"), true);
+  assert.equal(appointmentMatchesQuery(row, "210"), true);
+  assert.equal(appointmentMatchesQuery(row, "849211"), false);
+  // نام بیمار — بدون حساسیت به فاصله
+  assert.equal(appointmentMatchesQuery(row, "علی رضایی"), true);
+  assert.equal(appointmentMatchesQuery(row, "  علی "), true);
+  assert.equal(appointmentMatchesQuery(row, "کاظمی"), false);
+  // تطبیق زیررشته: «رضا» پیشوندِ «رضایی» است و می‌خورد
+  assert.equal(appointmentMatchesQuery(row, "رضا"), true);
+  assert.equal(appointmentMatchesQuery(row, "علی 8492"), true); // «یا»یی: کد می‌خورد
+  // شمارهٔ موبایل — با فاصله و ارقام فارسی هم می‌خواند
+  assert.equal(appointmentMatchesQuery(row, "09121234567"), true);
+  assert.equal(appointmentMatchesQuery(row, "۰۹۱۲ ۱۲۳ ۴۵۶۷"), true);
+  assert.equal(appointmentMatchesQuery(row, "1234"), true);
+  assert.equal(appointmentMatchesQuery(row, "9999"), false);
+  // ورودی خالی → نمایش همهٔ نوبت‌ها (فیلتر غیرفعال)
+  assert.equal(appointmentMatchesQuery(row, ""), true);
+  assert.equal(appointmentMatchesQuery(row, "   "), true);
+  // رشتهٔ بی‌رقم که نام نمی‌خورد
+  assert.equal(appointmentMatchesQuery(row, "مریم"), false);
+});
+
 test("شبکهٔ نوبت (۱۰ دقیقه) مستقیماً از BRANCHES", () => {
   const saturday = "2026-10-31";
   const hediye = slotTimesForBranchDate("hediye-yousef", saturday);
@@ -389,12 +460,13 @@ function reasonOf(outcome: SmsSendOutcome): string {
   return outcome.ok ? "" : outcome.reason;
 }
 
-test("قالب پیامک تأیید: نام، تاریخ جلالی صریح، ساعت، شعبه و تلفن شعبه", () => {
+test("قالب پیامک تأیید: نام، تاریخ جلالی صریح، ساعت، شعبه، کد رهگیری و تلفن شعبه", () => {
   const text = buildBookingConfirmationText({
     branchId: "hediye-yousef",
     date: "2026-11-02",
     time: "09:00",
     patientName: "علی رضایی",
+    trackingCode: "849210",
   });
   assert.ok(text.includes("علی رضایی عزیز"));
   assert.ok(text.includes("دوشنبه")); // روز هفتهٔ 2026-11-02
@@ -402,6 +474,9 @@ test("قالب پیامک تأیید: نام، تاریخ جلالی صریح، 
   assert.ok(text.includes("ساعت ۹:۰۰"));
   assert.ok(text.includes("هدیه یوسف"));
   assert.ok(text.includes("09936110745"));
+  // کد رهگیری در متن پیامک با ارقام لاتین می‌آید
+  assert.ok(text.includes("کد رهگیری"));
+  assert.ok(text.includes("849210"));
   assert.ok(!text.includes("فردا")); // تاریخ نسبی ممنوع؛ همیشه تاریخ صریح
 });
 
@@ -571,6 +646,11 @@ async function main(): Promise<void> {
     assert.equal(booking.startsAtUtc, "2026-11-02T05:30:00.000Z");
     assert.equal(booking.source, "public");
     assert.match(booking.id, /^[0-9a-f-]{36}$/);
+    // کد رهگیری ۶ رقمی همراه نوبت برمی‌گردد
+    assert.ok(
+      isValidTrackingCode(booking.trackingCode),
+      `قالب کد رهگیری نامعتبر: ${booking.trackingCode}`,
+    );
   });
 
   test("ثبت هم‌زمان همان نوبت دوباره → slot_taken (قید یکتای پایگاه‌داده)", async () => {
@@ -679,6 +759,75 @@ async function main(): Promise<void> {
     );
   });
 
+  /* ── کد رهگیری نوبت (روی PGlite) ── */
+
+  test("کد رهگیری: هر نوبت کد معتبر و یکتا می‌گیرد", async () => {
+    const times = ["10:40", "10:50", "11:10", "11:20"];
+    const codes: string[] = [];
+    const ids: string[] = [];
+    for (const [index, time] of times.entries()) {
+      const result = await createPublicBooking(
+        { db, nowUtcMs: nowFixedMs },
+        {
+          ...REQUEST_OK,
+          time,
+          patientName: `بیمار کد ${index + 1}`,
+        },
+      );
+      const booking = unwrap(result, `ثبت نوبت کد رهگیری ${index + 1}`);
+      assert.ok(
+        isValidTrackingCode(booking.trackingCode),
+        `قالب کد تولیدی نامعتبر: ${booking.trackingCode}`,
+      );
+      codes.push(booking.trackingCode);
+      ids.push(booking.id);
+    }
+    // یکتایی کدها در این دنباله از ثبت‌ها
+    assert.equal(new Set(codes).size, codes.length, "کدها یکتا نیستند");
+    // پاک‌سازی: نوبت‌های آزمون حذف می‌شوند تا پنجرهٔ یادآوری آزمون‌های
+    // بعدی همان ۴ نوبتِ انتظار را ببیند
+    for (const id of ids) {
+      unwrap(await deleteAppointment({ db }, id), `پاک‌سازی نوبت ${id}`);
+    }
+  });
+
+  test("کد رهگیری: برخورد کد تکراری → بازتلاش با کد تازه (نه slot_taken)", async () => {
+    // ردیف بذری با کد معلوم؛ مولدِ تزریق‌شده نخست همان کد را برمی‌گرداند
+    await pglite.insert(appointments).values({
+      branchId: "vatandar",
+      startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "12:00")),
+      patientName: "بذری کد رهگیری",
+      patientPhone: "09361110001",
+      trackingCode: "911100",
+      source: "public",
+      createdBy: null,
+    });
+    let calls = 0;
+    const result = await createPublicBooking(
+      { db, nowUtcMs: nowFixedMs },
+      {
+        ...REQUEST_OK,
+        branchId: "vatandar",
+        time: "10:40",
+        patientName: "بازتلاش کد رهگیری",
+      },
+      {
+        generateTrackingCode: () => {
+          calls += 1;
+          return calls <= 2 ? "911100" : "911101";
+        },
+      },
+    );
+    const booking = unwrap(result, "بازتلاش برخورد کد رهگیری");
+    assert.equal(booking.trackingCode, "911101");
+    assert.equal(calls, 3); // دو برخورد، سپس موفقیت با کد سوم
+    // پاک‌سازی: نوبت موفق و ردیف بذری حذف می‌شوند (شمارش پنجرهٔ یادآوری)
+    unwrap(await deleteAppointment({ db }, booking.id), "پاک‌سازی بازتلاش");
+    const rowsAfter = await db.select().from(appointments);
+    const seed = rowsAfter.find((entry) => entry.trackingCode === "911100")!;
+    unwrap(await deleteAppointment({ db }, seed.id), "پاک‌سازی بذری");
+  });
+
   /* ── نوبت دستی پذیرش ── */
 
   let staffBookingId = "";
@@ -710,6 +859,11 @@ async function main(): Promise<void> {
     assert.equal(rows[0]?.source, "staff");
     assert.equal(rows[0]?.createdBy, "reception");
     assert.equal(rows[0]?.patientName, "مریم کاظمی");
+    // کد رهگیری در ردیف پنل پذیرش هم هست
+    assert.ok(
+      isValidTrackingCode(rows[0]?.trackingCode ?? ""),
+      `قالب کد رهگیری ردیف پنل نامعتبر: ${String(rows[0]?.trackingCode)}`,
+    );
     assert.deepEqual(
       tehranDateTimeParts(Date.parse(rows[0]!.startsAtUtc)),
       { date: "2024-05-05", time: "10:30" },
@@ -804,6 +958,7 @@ async function main(): Promise<void> {
             startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-03", "09:00")),
             patientName: "تست مستقیم",
             patientPhone: "07121234567",
+            trackingCode: "911001",
             source: "public",
             createdBy: null,
           }),
@@ -821,6 +976,7 @@ async function main(): Promise<void> {
             startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-03", "09:00")),
             patientName: "تست مستقیم",
             patientPhone: "09121234567",
+            trackingCode: "911002",
             source: "public",
             createdBy: null,
           }),
@@ -838,6 +994,7 @@ async function main(): Promise<void> {
             startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "10:30")),
             patientName: "تست مستقیم",
             patientPhone: "09121234567",
+            trackingCode: "911003",
             source: "public",
             createdBy: null,
           }),
@@ -856,6 +1013,7 @@ async function main(): Promise<void> {
         startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "10:30")),
         patientName: "نوبت یادآوری",
         patientPhone: "09351112233",
+        trackingCode: "911004",
         source: "public",
         createdBy: null,
       })
@@ -878,6 +1036,7 @@ async function main(): Promise<void> {
             startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "12:20")),
             patientName: "تست مستقیم",
             patientPhone: "09121234567",
+            trackingCode: "911005",
             source: "public",
             createdBy: null,
             status: "postponed",
@@ -893,6 +1052,7 @@ async function main(): Promise<void> {
       startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-01", "16:30")),
       patientName: "نوبت امشب",
       patientPhone: "09361112244",
+      trackingCode: "911006",
       source: "public",
       createdBy: null,
     });
@@ -971,6 +1131,7 @@ async function main(): Promise<void> {
       startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "11:00")),
       patientName: "نوبت لغوشده",
       patientPhone: "09391112288",
+      trackingCode: "911007",
       source: "public",
       createdBy: null,
       status: "cancelled",
@@ -986,6 +1147,7 @@ async function main(): Promise<void> {
       startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-01", "08:00")),
       patientName: "شروع‌شده",
       patientPhone: "09391112266",
+      trackingCode: "911008",
       source: "public",
       createdBy: null,
     });
@@ -994,6 +1156,7 @@ async function main(): Promise<void> {
       startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-03", "09:00")),
       patientName: "پس‌فردا",
       patientPhone: "09391112277",
+      trackingCode: "911009",
       source: "public",
       createdBy: null,
     });
@@ -1008,6 +1171,7 @@ async function main(): Promise<void> {
       startsAtUtc: new Date(tehranDateTimeToUtcMs("2026-11-02", "12:00")),
       patientName: "تست شکست ارسال",
       patientPhone: "09371112255",
+      trackingCode: "911010",
       source: "public",
       createdBy: null,
     });

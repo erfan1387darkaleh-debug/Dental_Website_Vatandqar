@@ -27,6 +27,10 @@ import {
 } from "./time";
 import { getBookingBranch, isBranchOpenOnDate, slotInstantUtcMs, slotTimesForBranchDate } from "./slots";
 import { normalizeIranMobile } from "./phone";
+import {
+  generateTrackingCode,
+  type TrackingCodeGenerator,
+} from "./tracking";
 import { appointments } from "./schema";
 import type { BookingDb } from "./db";
 
@@ -92,6 +96,8 @@ export type CreatedBooking = {
   patientName: string;
   patientPhone: string;
   source: "public" | "staff";
+  /** کد رهگیری ۶ رقمی — مراجع با همین کد در پذیرش معرفی می‌شود */
+  trackingCode: string;
 };
 
 /** ردیف پنل پذیرش */
@@ -105,6 +111,8 @@ export type AppointmentRow = {
   patientPhone: string;
   source: "public" | "staff";
   createdBy: string | null;
+  /** کد رهگیری ۶ رقمی برای جستجوی سریع در پنل */
+  trackingCode: string;
 };
 
 type DbContext = { db: BookingDb; nowUtcMs: number };
@@ -184,6 +192,16 @@ function isUniqueViolation(error: unknown): boolean {
   return false;
 }
 
+/** سقف بازتلاش تولید کد رهگیری — برخورد تصادفی ۶ رقم عملاً نادر است */
+const MAX_TRACKING_CODE_ATTEMPTS = 5;
+
+/**
+ * درج نوبت با کد رهگیری ۶ رقمیِ یکتا.
+ * خطای ۲۳۵۰۵ پایگاه‌داده دو معنا دارد: یا همین ساعت لحظاتی پیش رزرو
+ * شده (slot_taken) یا کد رهگیری تولیدی به‌ندرت برخورد کرده است؛ این دو
+ * با پرس‌وجوی «آیا ردیف دیگری همین کد را دارد؟» از هم تفکیک می‌شوند —
+ * برخورد کد با کد تازه دوباره تلاش می‌شود، ساعتِ اشغال بی‌درنگ رد می‌شود.
+ */
 async function insertAppointment(
   db: BookingDb,
   params: {
@@ -196,40 +214,67 @@ async function insertAppointment(
     source: "public" | "staff";
     createdBy: string | null;
   },
+  generateCode: TrackingCodeGenerator,
 ): Promise<ServiceResult<CreatedBooking>> {
-  try {
-    const inserted = await db
-      .insert(appointments)
-      .values({
-        branchId: params.branchId,
-        startsAtUtc: new Date(params.startsAtUtcMs),
-        durationMinutes: BOOKING.slotMinutes,
-        patientName: params.patientName,
-        patientPhone: params.patientPhone,
-        source: params.source,
-        createdBy: params.createdBy,
-      })
-      .returning({ id: appointments.id });
-    const row = inserted[0];
-    if (!row) return invalid("db_error");
-    return {
-      ok: true,
-      value: {
-        id: row.id,
-        branchId: params.branchId,
-        date: params.date,
-        time: params.time,
-        startsAtUtc: new Date(params.startsAtUtcMs).toISOString(),
-        patientName: params.patientName,
-        patientPhone: params.patientPhone,
-        source: params.source,
-      },
-    };
-  } catch (error) {
-    if (isUniqueViolation(error)) return invalid("slot_taken");
-    console.error("[booking] درج نوبت ناموفق بود:", error);
-    return invalid("db_error");
+  for (let attempt = 0; attempt < MAX_TRACKING_CODE_ATTEMPTS; attempt += 1) {
+    const trackingCode = generateCode();
+    try {
+      const inserted = await db
+        .insert(appointments)
+        .values({
+          branchId: params.branchId,
+          startsAtUtc: new Date(params.startsAtUtcMs),
+          durationMinutes: BOOKING.slotMinutes,
+          patientName: params.patientName,
+          patientPhone: params.patientPhone,
+          source: params.source,
+          createdBy: params.createdBy,
+          trackingCode,
+        })
+        .returning({ id: appointments.id, trackingCode: appointments.trackingCode });
+      const row = inserted[0];
+      if (!row) return invalid("db_error");
+      return {
+        ok: true,
+        value: {
+          id: row.id,
+          branchId: params.branchId,
+          date: params.date,
+          time: params.time,
+          startsAtUtc: new Date(params.startsAtUtcMs).toISOString(),
+          patientName: params.patientName,
+          patientPhone: params.patientPhone,
+          source: params.source,
+          trackingCode: row.trackingCode,
+        },
+      };
+    } catch (error) {
+      if (!isUniqueViolation(error)) {
+        console.error("[booking] درج نوبت ناموفق بود:", error);
+        return invalid("db_error");
+      }
+      // تفکیک دو معنای 23505: کد رهگیری تکراری؟ (ساعتِ اشغال → slot_taken)
+      let codeTaken = false;
+      try {
+        const sameCode = await db
+          .select({ id: appointments.id })
+          .from(appointments)
+          .where(eq(appointments.trackingCode, trackingCode))
+          .limit(1);
+        codeTaken = sameCode.length > 0;
+      } catch (probeError) {
+        console.error(
+          "[booking] تفکیک برخورد کد رهگیری/ساعت ناموفق بود:",
+          probeError,
+        );
+        return invalid("db_error");
+      }
+      if (!codeTaken) return invalid("slot_taken");
+      // برخورد کد — با کد تازه دوباره تلاش می‌شود (حلقهٔ بالای تابع)
+    }
   }
+  console.error("[booking] ساخت کد رهگیری یکتا پس از چند تلاش ناموفق بود.");
+  return invalid("db_error");
 }
 
 /* ─────────────────────────── نوبت عمومی (مراجع) ─────────────────────────── */
@@ -238,10 +283,13 @@ async function insertAppointment(
  * ثبت نوبت آنلاین مراجع — با همهٔ قواعد رزرو عمومی.
  * در درخواست هم‌زمان چند کاربر برای یک ساعت، قید یکتای پایگاه‌داده
  * جلوی ثبت دوباره را می‌گیرد و خطای «slot_taken» برمی‌گردد.
+ * پارامتر سوم درز آزمون است: تولیدکنندهٔ کد رهگیری تزریق‌شدنی تا
+ * سناریوی «برخورد کد و بازتلاش» به‌طور قطعی آزموده شود.
  */
 export async function createPublicBooking(
   ctx: DbContext,
   input: BookingInput,
+  options?: { generateTrackingCode?: TrackingCodeGenerator },
 ): Promise<ServiceResult<CreatedBooking>> {
   const { db, nowUtcMs } = ctx;
 
@@ -263,28 +311,35 @@ export async function createPublicBooking(
   const patientPhone = normalizedPatientPhone(input.patientPhone);
   if (!patientPhone) return invalid("invalid_phone");
 
-  return insertAppointment(db, {
-    branchId: String(input.branchId),
-    date: schedule.date,
-    time: schedule.time,
-    startsAtUtcMs: schedule.startsAtUtcMs,
-    patientName,
-    patientPhone,
-    source: "public",
-    createdBy: null,
-  });
+  return insertAppointment(
+    db,
+    {
+      branchId: String(input.branchId),
+      date: schedule.date,
+      time: schedule.time,
+      startsAtUtcMs: schedule.startsAtUtcMs,
+      patientName,
+      patientPhone,
+      source: "public",
+      createdBy: null,
+    },
+    options?.generateTrackingCode ?? generateTrackingCode,
+  );
 }
 
 /* ─────────────────────────── نوبت دستی پذیرش ─────────────────────────── */
 
 /**
  * ثبت دستی نوبت توسط پذیرش (فراخوانی تلفنی و…) — بدون قید افق/فاصله؛
- * ثبت نوبت‌های گذشته برای مستندسازی تماس‌ها مجاز است.
+ * ثبت نوبت‌های گذشته برای مستندسازی تماس‌ها مجاز است. برای نوبتِ دستی
+ * هم کد رهگیری تولید می‌شود تا پذیرش بتواند همان کد را به مراجع بدهد.
+ * پارامتر چهارم درز آزمون تولیدکنندهٔ کد است.
  */
 export async function createStaffBooking(
   ctx: Pick<DbContext, "db">,
   actor: string,
   input: BookingInput,
+  options?: { generateTrackingCode?: TrackingCodeGenerator },
 ): Promise<ServiceResult<CreatedBooking>> {
   const schedule = checkSchedule(String(input.branchId), input.date, input.time);
   if (!schedule.ok) return invalid(schedule.error);
@@ -294,16 +349,20 @@ export async function createStaffBooking(
   const patientPhone = normalizedPatientPhone(input.patientPhone);
   if (!patientPhone) return invalid("invalid_phone");
 
-  return insertAppointment(ctx.db, {
-    branchId: String(input.branchId),
-    date: schedule.date,
-    time: schedule.time,
-    startsAtUtcMs: schedule.startsAtUtcMs,
-    patientName,
-    patientPhone,
-    source: "staff",
-    createdBy: actor,
-  });
+  return insertAppointment(
+    ctx.db,
+    {
+      branchId: String(input.branchId),
+      date: schedule.date,
+      time: schedule.time,
+      startsAtUtcMs: schedule.startsAtUtcMs,
+      patientName,
+      patientPhone,
+      source: "staff",
+      createdBy: actor,
+    },
+    options?.generateTrackingCode ?? generateTrackingCode,
+  );
 }
 
 /* ─────────────────────────── موجودی ساعات ─────────────────────────── */
@@ -421,6 +480,7 @@ export async function listDayAppointments(
         patientPhone: appointments.patientPhone,
         source: appointments.source,
         createdBy: appointments.createdBy,
+        trackingCode: appointments.trackingCode,
         createdAt: appointments.createdAt,
       })
       .from(appointments)
@@ -444,6 +504,7 @@ export async function listDayAppointments(
           patientPhone: row.patientPhone,
           source: row.source as "public" | "staff",
           createdBy: row.createdBy,
+          trackingCode: row.trackingCode,
         };
       })
       .sort((a, b) => a.time.localeCompare(b.time));

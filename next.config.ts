@@ -57,6 +57,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // نشان تکمیل ارتقای امنیتی — جریان `next upgrade --agent=security`
+  // نسخهٔ 16.4.3 (آسیب‌پذیر طبق اعلان امنیتی) → 16.4.6 را پچ کرده است
+  experimental: {
+    agentUpgrade: "security",
+  },
   async headers() {
     return [
       {

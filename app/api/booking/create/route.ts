@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
         time: booking.time,
         patientName: booking.patientName,
         patientPhone: booking.patientPhone,
+        trackingCode: booking.trackingCode,
       });
       if (!outcome.ok) {
         console.error(

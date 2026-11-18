@@ -8,11 +8,13 @@ import {
   LogOut,
   Plus,
   RotateCw,
+  Search,
   Trash2,
 } from "lucide-react";
 import { BRANCHES, toPersianDigits } from "@/lib/site-config";
 import { btnPrimary } from "@/lib/styles";
 import { formatJalaliFull, formatTimeFa } from "@/lib/booking/jalali";
+import { appointmentMatchesQuery } from "@/lib/booking/search";
 import { slotTimesForBranchDate } from "@/lib/booking/slots";
 import { useClientToday } from "@/lib/booking/use-client-today";
 import type { TehranDate, TimeOfDay } from "@/lib/booking/time";
@@ -50,6 +52,9 @@ export function ReceptionDashboard({ username }: { username: string }) {
   >(null);
 
   const [logoutPending, setLogoutPending] = useState(false);
+
+  /** ورودی جستجو — فیلتر زندهٔ فهرست با کد رهگیری/نام/موبایل */
+  const [searchQuery, setSearchQuery] = useState("");
 
   const determineDate = selectedDate ?? today;
   const gridAnchor = anchor ?? today;
@@ -133,7 +138,20 @@ export function ReceptionDashboard({ username }: { username: string }) {
         return;
       }
       if (response.status === 201) {
-        setCreateMessage({ ok: true, text: "نوبت دستی با موفقیت ثبت شد." });
+        const created =
+          data !== null && typeof data === "object"
+            ? (data as { appointment?: { trackingCode?: unknown } }).appointment
+            : null;
+        const code =
+          created && typeof created.trackingCode === "string"
+            ? created.trackingCode
+            : null;
+        setCreateMessage({
+          ok: true,
+          text: code
+            ? `نوبت دستی با موفقیت ثبت شد؛ کد رهگیری: ${code}`
+            : "نوبت دستی با موفقیت ثبت شد.",
+        });
         setFormTime("");
         setFormName("");
         setFormPhone("");
@@ -195,6 +213,12 @@ export function ReceptionDashboard({ username }: { username: string }) {
   const selectedBranch =
     BRANCHES.find((branch) => branch.id === branchId) ?? BRANCHES[0];
   const bookedTimes = new Set((rows ?? []).map((row) => row.time));
+  /** فیلتر زنده — نوبت‌های خوانده‌شدهٔ روز با ورودی جستجوی پذیرش */
+  const isFiltering = searchQuery.trim() !== "";
+  const visibleRows =
+    rows === null
+      ? null
+      : rows.filter((row) => appointmentMatchesQuery(row, searchQuery));
   const slotOptions =
     determineDate !== null
       ? slotTimesForBranchDate(branchId, determineDate)
@@ -329,11 +353,38 @@ export function ReceptionDashboard({ username }: { username: string }) {
             </button>
           </div>
 
+          {/* جستجوی زندهٔ پذیرش — کد رهگیری، نام بیمار یا شمارهٔ موبایل */}
+          <div className="mt-3">
+            <label htmlFor="admin-search" className="sr-only">
+              جستجوی نوبت‌ها
+            </label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute inset-y-0 right-3 my-auto h-4 w-4 text-subtle"
+                aria-hidden="true"
+              />
+              <input
+                id="admin-search"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="جستجو با کد رهگیری یا نام بیمار…"
+                className="w-full rounded-xl border border-line-strong bg-canvas pe-3 ps-9 py-2.5 text-sm text-heading transition-colors duration-200 focus:border-primary-400 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
+              />
+            </div>
+          </div>
+
           {determineDate && rows !== null && totalSlots > 0 ? (
             <p className="mt-2 text-xs text-subtle">
               ظرفیت روز: {toPersianDigits(String(totalSlots))} نوبت ۱۰ دقیقه‌ای؛
               ثبت‌شده: {toPersianDigits(String(bookedCount))}؛ خالی:{" "}
               {toPersianDigits(String(Math.max(totalSlots - bookedCount, 0)))}
+            </p>
+          ) : null}
+          {isFiltering && rows !== null && rows.length > 0 ? (
+            <p className="mt-1 text-xs text-subtle" aria-live="polite">
+              نتیجهٔ جستجو: {toPersianDigits(String(visibleRows?.length ?? 0))} از{" "}
+              {toPersianDigits(String(rows.length))} نوبت
             </p>
           ) : null}
 
@@ -359,9 +410,14 @@ export function ReceptionDashboard({ username }: { username: string }) {
                   ? "شعبه در این روز تعطیل است."
                   : "نوبتی در این روز ثبت نشده است."}
               </p>
-            ) : rows !== null ? (
+            ) : visibleRows !== null && visibleRows.length === 0 ? (
+              <p className="py-6 text-sm text-subtle">
+                نوبتی با این جستجو یافت نشد؛ کد رهگیری، نام یا شمارهٔ دیگری را
+                بیازمایید.
+              </p>
+            ) : visibleRows !== null ? (
               <ul className="grid gap-2">
-                {rows.map((row) => (
+                {visibleRows.map((row) => (
                   <li
                     key={row.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-3 py-2.5"
@@ -374,11 +430,17 @@ export function ReceptionDashboard({ username }: { username: string }) {
                         <p className="truncate text-sm font-bold text-heading">
                           {row.patientName}
                         </p>
-                        <p
-                          dir="ltr"
-                          className="text-left text-xs text-subtle"
-                        >
-                          {toPersianDigits(row.patientPhone)}
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-subtle">
+                          <span dir="ltr" className="text-left">
+                            {toPersianDigits(row.patientPhone)}
+                          </span>
+                          <span
+                            dir="ltr"
+                            title="کد رهگیری نوبت"
+                            className="rounded-md bg-tint px-1.5 py-0.5 text-left font-extrabold text-primary-800 dark:text-primary-200"
+                          >
+                            {row.trackingCode}
+                          </span>
                         </p>
                       </div>
                     </div>

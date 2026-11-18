@@ -29,6 +29,13 @@
       "when": 1794429465407,
       "tag": "0003_add_gallery",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794920192471,
+      "tag": "0004_add_tracking_code",
+      "breakpoints": true
     }
   ]
 }

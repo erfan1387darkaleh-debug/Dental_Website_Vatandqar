@@ -231,18 +231,19 @@ export type SmsAppointmentInfo = {
 };
 
 /**
- * متن پیامک تأیید ثبت نوبت — تاریخ جلالی + شعبه + تلفن شعبه.
+ * متن پیامک تأیید ثبت نوبت — تاریخ جلالی + شعبه + کد رهگیری + تلفن شعبه.
  * تاریخ صریح نوشته می‌شود (بدون «امروز/فردا») تا پنجرهٔ ارسال هر چه
- * باشد، متن پیام همیشه درست بماند.
+ * باشد، متن پیام همیشه درست بماند. کد رهگیری با ارقام لاتین می‌آید تا
+ * پذیرش همان را در جستجوی پنل بیابد.
  */
 export function buildBookingConfirmationText(
-  info: SmsAppointmentInfo & { patientName: string },
+  info: SmsAppointmentInfo & { patientName: string; trackingCode: string },
 ): string {
   const branch = getBookingBranch(info.branchId);
   const branchName = branch?.name ?? "";
   const branchPhone = branch?.displayPhone ?? "";
   const when = `${formatJalaliFull(info.date)}، ساعت ${formatTimeFa(info.time)}`;
-  return `${info.patientName} عزیز، نوبت شما ثبت شد: ${when} — ${branchName}. برای تغییر یا لغو با ${branchPhone} تماس بگیرید.`;
+  return `${info.patientName} عزیز، نوبت شما ثبت شد: ${when} — ${branchName}. کد رهگیری شما: ${info.trackingCode}. برای تغییر یا لغو با ${branchPhone} تماس بگیرید.`;
 }
 
 /** متن پیامک یادآوری نوبت — بدون نام بیمار؛ کوتاه و با تلفن شعبه */
@@ -257,7 +258,11 @@ export function buildAppointmentReminderText(info: SmsAppointmentInfo): string {
 
 /** ارسال پیامک تأیید ثبت برای یک نوبت (مسیر عمومی، پس از پاسخ ۲۰۱) */
 export async function sendAppointmentConfirmationSms(
-  appointment: SmsAppointmentInfo & { patientName: string; patientPhone: string },
+  appointment: SmsAppointmentInfo & {
+    patientName: string;
+    patientPhone: string;
+    trackingCode: string;
+  },
 ): Promise<SmsSendOutcome> {
   return sendSms(
     appointment.patientPhone,
