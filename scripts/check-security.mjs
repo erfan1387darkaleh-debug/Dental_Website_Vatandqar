@@ -7,7 +7,7 @@
  *    ۲) هیچ فایل .envای رهگیری (tracked) در گیت نیست
  *    ۳) هیچ کلید/رازی به‌صورت مقدار جایگزین در process.env نیست
  *       (همان حفره‌ای که باید همیشه بسته بماند)
- *    ۴) dangerouslySetInnerHTML فقط در دو محل مجاز (ثابت‌های سمت سرور)
+ *    ۴) dangerouslySetInnerHTML فقط در محل‌های مجاز (ثابت‌های سمت سرور)
  *  در صورت یافتن هر مورد، با کد خروج ۱ و فهرست موارد به پایان می‌رسد.
  * ────────────────────────────────────────────────────────────────
  */
@@ -104,10 +104,12 @@ for (const file of files) {
   }
 }
 
-/* ── ۴) dangerouslySetInnerHTML فقط در دو ثابت مجاز ── */
+/* ── ۴) dangerouslySetInnerHTML فقط در ثابت‌های سمت سرور ── */
 const ALLOWED_HTML_INJECTION = new Set([
   "app/layout.tsx", // اسکریپت ثابت مقداردهی تم (بدون ورودی کاربر)
   "app/(site)/layout.tsx", // JSON-LD ثابت سمت سرور
+  "app/(beauty)/layout.tsx", // همان JSON-LD ثابت BUSINESS_JSON_LD
+  "app/(products)/layout.tsx", // همان JSON-LD ثابت BUSINESS_JSON_LD
 ]);
 for (const file of files) {
   const text = readFileSync(file, "utf8");
