@@ -28,7 +28,10 @@ export default function SiteLayout({
       <main id="main-content" className="flex-1">
         {children}
       </main>
-      <SiteFooter />
+      {/* فوتر روی لایهٔ پس‌زمینهٔ صفحه اصلی (z-0) می‌نشیند */}
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
       <FloatingTelegram />
       <script
         type="application/ld+json"
