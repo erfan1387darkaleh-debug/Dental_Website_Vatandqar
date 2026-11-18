@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { SITE, SITE_URL } from "@/lib/site-config";
+import { SmoothScroll } from "@/components/smooth-scroll";
 
 /*
  * فونت فارسی «وزیرمتن» (self-hosted) — فایل در app/fonts قرار دارد و
@@ -81,6 +82,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           * <html> تفاوت احتمالی کلاس dark بین سرور و کلاینت را بی‌اثر می‌کند.
           */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* اسکرول نرم سراسری (Lenis) — یک نمونه برای همهٔ صفحات؛
+            با prefers-reduced-motion خودکار غیرفعال می‌شود. */}
+        <SmoothScroll />
         {children}
       </body>
     </html>

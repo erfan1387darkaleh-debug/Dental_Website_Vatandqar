@@ -129,6 +129,18 @@ html {
   background-color: var(--canvas);
 }
 
+/*
+ * وقتی Lenis فعال است (کلاس lenis روی <html>)، نرم‌سازی بومی مرورگر
+ * باید خاموش شود؛ وگرنه دو موتور انیمیشن هم‌زمان روی یک اسکرول کار
+ * می‌کنند و پرش‌های لنگر/مسیریابی نکست تکان‌دار می‌شوند. مقدار
+ * scroll-behavior بالا فقط «فالبک» بدون جاوااسکریپت است.
+ * در حالت prefers-reduced-motion، هم Lenis نرم‌سازی را کنار می‌گذارد
+ * و هم قاعدهٔ پایین فایل، scroll-behavior را خودکار/فوری می‌کند.
+ */
+html.lenis {
+  scroll-behavior: auto;
+}
+
 ::selection {
   background-color: var(--color-primary-200);
   color: var(--color-primary-950);
