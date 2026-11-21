@@ -1,32 +1,41 @@
+import Image from "next/image";
+import type { HTMLAttributes } from "react";
+
 /**
- * آیکون خطی دندان (سبک Lucide) — برای نشان مرکزی کارت هیرو.
- * چون Lucide آیکون «دندان» ندارد، این گلیف به‌صورت بردار خطی تمیز و
- * متقارن ساخته شده: تاج دوبخشی در بالا، گردن باریک و دو ریشهٔ گرد در
- * پایین (نسبت‌های کلاسیک آیکون‌های دندانپزشکی) در viewBox ۲۴×۲۴.
- * stroke از currentColor پیروی می‌کند تا مثل آیکون‌های Lucide
- * رنگ‌پذیر باشد. نشان برند سایت (tooth-logo.tsx) جداگانه است و این
- * کامپوننت جایگزین آن نیست.
+ * تصویر دندان با تاج طلایی — نشان مرکزی قاب‌های دایره‌ای سایت.
+ *
+ * منبع تصویر، فایل شفاف `public/images/tooth-golden-crown.png` است و
+ * بازسازی یا بازکشیدن نشده؛ همان فایل با `next/image` نمایش داده
+ * می‌شود تا مرورگر نسخهٔ بهینه و متناسب با اندازهٔ نمایش را دریافت کند.
+ *
+ * فایل اصلی ۱۵۳۶×۱۰۲۴ و افقی است و حاشیهٔ شفاف زیادی در دو طرف دارد؛
+ * اگر با object-contain در جعبهٔ مربعی جا داده شود، خودِ دندان کوچک
+ * می‌شود. بنابراین تصویر کمی بزرگ‌تر از جعبه رندر و با درصدهای زیر
+ * دقیقاً روی مرکز جعبه تنظیم می‌شود (محتوای غیرشفاف در مختصات فایل
+ * از x=366 تا x=1090 و y=8 تا y=982 است؛ یعنی مرکز محتوا ۴۰ پیکسل
+ * چپ‌تر و ۱۷ پیکسل بالاتر از مرکز تصویر قرار دارد).
+ *
+ * جعبهٔ چیدمان همان اندازهٔ قبلی است (کلاس‌های ارتفاع/عرض) تا هیچ
+ * تغییری در فاصله‌ها و واکنش‌گرایی نشان‌ها ایجاد نشود.
  */
 export function ToothIcon({
   className = "h-6 w-6",
-  strokeWidth = 1.5,
-}: {
-  className?: string;
-  strokeWidth?: number;
-}) {
+  ...rest
+}: HTMLAttributes<HTMLSpanElement>) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
+    <span
+      className={`relative inline-flex shrink-0 items-center justify-center ${className}`}
       aria-hidden="true"
-      focusable="false"
+      {...rest}
     >
-      <path d="M12 3.25C10.55 3.25 9.9 4.35 8.35 4.35C6.15 4.35 4.55 6.05 4.55 8.3C4.55 10.1 5.3 11.35 5.95 13.1C6.6 14.9 6.95 17.2 7.6 18.9C8.05 20 9.2 20.5 9.85 19.55C10.7 18.3 10.75 16.35 11.45 15.1C11.75 14.55 12.25 14.55 12.55 15.1C13.25 16.35 13.3 18.3 14.15 19.55C14.8 20.5 15.95 20 16.4 18.9C17.05 17.2 17.4 14.9 18.05 13.1C18.7 11.35 19.45 10.1 19.45 8.3C19.45 6.05 17.85 4.35 15.65 4.35C14.1 4.35 13.45 3.25 12 3.25Z" />
-    </svg>
+      <Image
+        src="/images/tooth-golden-crown.png"
+        alt=""
+        width={1536}
+        height={1024}
+        sizes="128px"
+        className="pointer-events-none absolute left-[53.7%] top-[51.6%] h-[94%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
+      />
+    </span>
   );
 }

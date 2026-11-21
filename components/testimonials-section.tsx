@@ -11,6 +11,7 @@ import type { TestimonialRecord } from "@/lib/testimonials/service";
 import { SectionHeading } from "@/components/section-heading";
 import { Container } from "@/components/container";
 import { Reveal } from "@/components/reveal";
+import { scheduleIdle } from "@/lib/schedule-idle";
 
 type PublicTestimonialsResult = { testimonials?: unknown };
 
@@ -53,9 +54,7 @@ export function TestimonialsSection() {
 
   const loadApproved = useCallback(async () => {
     try {
-      const response = await fetch("/api/testimonials", {
-        cache: "no-store",
-      });
+      const response = await fetch("/api/testimonials");
       if (!response.ok) {
         // بخش نظرات فرعی است؛ خطای خواندن، صفحه را مختل نمی‌کند
         console.error("[testimonials] خواندن نظرات ناموفق بود.");
@@ -77,11 +76,12 @@ export function TestimonialsSection() {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.resolve().then(() => {
+    const cancelIdle = scheduleIdle(() => {
       if (!cancelled) void loadApproved();
     });
     return () => {
       cancelled = true;
+      cancelIdle();
     };
   }, [loadApproved]);
 

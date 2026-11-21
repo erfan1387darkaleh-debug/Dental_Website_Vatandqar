@@ -6,6 +6,7 @@ import type { PublicGalleryCase } from "@/lib/gallery/service";
 import { SectionHeading } from "@/components/section-heading";
 import { Container } from "@/components/container";
 import { Reveal } from "@/components/reveal";
+import { scheduleIdle } from "@/lib/schedule-idle";
 import { BeforeAfterSlider } from "@/components/before-after-slider";
 
 type PublicGalleryResult = { cases?: unknown };
@@ -28,7 +29,7 @@ export function GallerySection() {
     let cancelled = false;
     async function loadCases() {
       try {
-        const response = await fetch("/api/gallery", { cache: "no-store" });
+        const response = await fetch("/api/gallery");
         if (!response.ok) {
           // بخش نمونه‌کارها فرعی است؛ خطای خواندن، صفحه را مختل نمی‌کند
           console.error("[gallery] خواندن نمونه‌کارها ناموفق بود.");
@@ -47,11 +48,12 @@ export function GallerySection() {
         setCases([]);
       }
     }
-    void Promise.resolve().then(() => {
+    const cancelIdle = scheduleIdle(() => {
       if (!cancelled) void loadCases();
     });
     return () => {
       cancelled = true;
+      cancelIdle();
     };
   }, []);
 

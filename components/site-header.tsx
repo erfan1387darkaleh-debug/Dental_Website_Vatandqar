@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +19,6 @@ import {
   TELEGRAM_URL,
   toPersianDigits,
 } from "@/lib/site-config";
-import { ToothLogo } from "@/components/tooth-logo";
 import { Container } from "@/components/container";
 
 /** لینک‌های ناوبری هدر — همان NAV_LINKS به‌علاوه لینک مستقیم به
@@ -75,8 +75,21 @@ export function SiteHeader() {
           className="flex shrink-0 items-center gap-2.5 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-700 dark:focus-visible:outline-primary-300"
           aria-label={SITE.name}
         >
+          {/* نشان برند — تصویر شفاف دندان با تاج طلایی، همان فایل کارت‌های
+              ویژگی؛ با object-contain کامل و بدون برش یا کشیدگی داخل
+              مربع سبزآبی می‌نشیند. تصویر تمام مربع را پر می‌کند و ۲۷٪
+              بزرگ‌نمایی نمایشی فقط روی خود تصویر اعمال می‌شود تا تاج و
+              دندان در اندازهٔ هدر خواناتر باشند؛ مربع و متن‌های برند
+              دست‌نخورده‌اند. */}
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm">
-            <ToothLogo className="h-6 w-6" />
+            <Image
+              src="/images/tooth-golden-crown.png"
+              alt=""
+              width={1536}
+              height={1024}
+              sizes="56px"
+              className="h-full w-full scale-[1.27] object-contain"
+            />
           </span>
           <span className="flex flex-col leading-tight">
             <span className="text-base font-extrabold text-heading sm:text-lg">
@@ -99,7 +112,7 @@ export function SiteHeader() {
                 target={link.newTab ? "_blank" : undefined}
                 rel={link.newTab ? "noopener noreferrer" : undefined}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                className={`rounded-full px-2.5 py-2 text-sm font-medium transition-colors duration-200 lg:px-4 ${
                   active
                     ? "bg-tint text-accent-strong"
                     : "text-muted hover:bg-surface-2 hover:text-heading"

@@ -26,7 +26,8 @@ export function HomeBackground() {
         src="/images/dental-unit-bg.webp"
         alt="یونیت دندانپزشکی مدرن؛ صندلی برقی آبی، چراغ معاینهٔ سقفی، هندپیس‌ها و پنل کنترل"
         fill
-        priority
+        preload
+        quality={60}
         sizes="100vw"
         className="object-contain opacity-85 blur-none dark:opacity-65"
       />

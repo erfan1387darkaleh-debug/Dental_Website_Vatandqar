@@ -51,7 +51,18 @@ export async function GET(request: NextRequest) {
   if (!result.ok) return testimonialErrorResponse(result.error);
   return NextResponse.json(
     { testimonials: result.value },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        /*
+         * دادهٔ عمومی و غیرشخصی است؛ ۱۵ ثانیه کش مرورگر و ۶۰ ثانیه کش
+         * CDN کافی است تا در بازدیدهای پیاپی درخواست تکراری نرود، ولی
+         * نظر تازه‌تأییدشده هم تقریباً بی‌درنگ دیده شود. خطاها جداگانه
+         * و بدون کش برگردانده می‌شوند.
+         */
+        "Cache-Control":
+          "public, max-age=15, s-maxage=60, stale-while-revalidate=300",
+      },
+    },
   );
 }
 

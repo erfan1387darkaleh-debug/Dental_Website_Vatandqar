@@ -57,6 +57,12 @@ export async function GET(request: NextRequest) {
   }));
   return NextResponse.json(
     { cases },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        /* همان سیاست نظرات: کش کوتاه عمومی، بدون هیچ دادهٔ شخصی */
+        "Cache-Control":
+          "public, max-age=15, s-maxage=60, stale-while-revalidate=300",
+      },
+    },
   );
 }

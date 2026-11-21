@@ -24,11 +24,6 @@ export function QuickBookingSection() {
         />
 
         <div className="relative mx-auto mt-10 max-w-3xl sm:mt-12">
-          {/* هالهٔ گرادیان برند پشت کارت */}
-          <div
-            aria-hidden="true"
-            className="absolute -inset-4 rounded-[2.5rem] bg-linear-to-l from-primary-100/80 to-sky-100/80 blur-xl sm:-inset-6 dark:from-primary-900/40 dark:to-sky-900/30"
-          />
           <div className="relative rounded-3xl border border-line-strong bg-surface-2/85 p-4 shadow-soft backdrop-blur-md sm:p-6">
             {/* چون ?branch= در مؤلفهٔ خوانندهٔ پارامترها خوانده می‌شود، مرز Suspense الزامی است */}
             <Suspense fallback={<WizardFallback />}>

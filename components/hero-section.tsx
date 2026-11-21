@@ -34,13 +34,15 @@ function HeroChip({
   children: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-xl border border-white/60 bg-surface/80 px-2 py-1.5 shadow-soft backdrop-blur-xl dark:border-white/10 sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-2">
+    <div className="flex items-center gap-2 rounded-xl border border-white/60 bg-surface/80 px-2.5 py-2 shadow-soft backdrop-blur-xl dark:border-white/10 sm:rounded-2xl sm:px-3.5 sm:py-2.5">
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md sm:h-7 sm:w-7 sm:rounded-lg ${CHIP_TONE_CLASSES[tone]}`}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md sm:h-7 sm:w-7 sm:rounded-lg ${CHIP_TONE_CLASSES[tone]}`}
       >
-        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+        <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" aria-hidden="true" />
       </span>
-      <span className="whitespace-nowrap text-[10px] font-semibold leading-4 text-heading sm:text-[11px] sm:leading-5">
+      {/* متن روی موبایل اجازهٔ شکستن دارد تا در ستون باریک سرریز نکند؛
+          از sm به بالا یک‌خطی می‌ماند */}
+      <span className="min-w-0 whitespace-normal text-xs font-semibold leading-5 text-heading sm:whitespace-nowrap sm:text-[13px]">
         {children}
       </span>
     </div>
@@ -148,16 +150,18 @@ export function HeroSection() {
                 className="absolute -inset-3 rounded-[2.75rem] bg-linear-to-l from-primary-200/25 via-sky-200/20 to-indigo-200/15 blur-lg sm:-inset-4 dark:from-primary-800/10 dark:via-sky-800/10 dark:to-indigo-800/10"
               />
               <div className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-surface/70 shadow-soft backdrop-blur-xl dark:border-white/10">
-                {/* ناحیهٔ تصویر — در موبایل مربع است تا جا برای نشان‌های شناور
-                    کافی باشد؛ نشان‌ها در گوشه‌ها لنگر شده‌اند و فاصله‌شان از
-                    لبهٔ دایرهٔ مرکزی با دامنهٔ ۸ پیکسلی انیمیشن شناوری محاسبه
-                    شده است */}
+                {/* ناحیهٔ تصویر — در موبایل مربع و از sm به بالا ۴:۳ است تا
+                    دایرهٔ مرکزی و نشان‌های شناور جای کافی داشته باشند */}
                 <div className="flex aspect-square items-center justify-center bg-linear-to-b from-tint via-surface to-indigo-100/20 p-6 dark:from-primary-950/70 dark:via-primary-950/40 dark:to-indigo-950/20 sm:aspect-4/3 sm:p-8">
                   {/* نشان مرکزی: حلقهٔ روشن + قرص تیرهٔ گرادیان + دندان و درخشش */}
                   <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-surface p-2 ring-1 ring-primary-100/80 shadow-soft sm:h-40 sm:w-40 sm:p-2.5 lg:h-44 lg:w-44 dark:bg-slate-900/90 dark:ring-white/10">
                     <div className="relative flex h-full w-full items-center justify-center rounded-full bg-linear-to-b from-slate-800 via-slate-900 to-primary-950 ring-1 ring-white/10">
+                      {/* تصویر دندان ۳۳٪ بزرگتر از قبل رندر می‌شود (۱۲۵٪ ارتفاع
+                          جعبه به‌جای ۹۴٪) و درصدهای مرکزیت هم متناسب با آن
+                          به‌روز شده‌اند تا محتوای تصویر دقیقاً در مرکز دایره
+                          بماند؛ دایره و اندازهٔ جعبه تغییری نمی‌کنند. */}
                       <ToothIcon
-                        className="h-12 w-12 text-white sm:h-16 sm:w-16 lg:h-18 lg:w-18"
+                        className="h-12 w-12 text-white [&>img]:left-[54.9%] [&>img]:top-[52.1%] [&>img]:h-[125%] sm:h-16 sm:w-16 lg:h-18 lg:w-18"
                         aria-hidden="true"
                       />
                       <Sparkles
@@ -172,29 +176,34 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* نشان‌های شناور — یکی بالا-راست و دو نشان چیده‌شده در سمت چپ
-                    (بالا و پایین)؛ هر جلد موقعیت‌دهی جدا از انیمیشن شناوری
-                    دارد تا transformها تداخل نکنند. در عرض‌های زیر ۳۶۰px نشان
-                    راست مخفی می‌شود تا با نشان چپ هم‌پوشان نشود. */}
-                <div className="absolute right-3 top-3 hidden min-[360px]:block sm:right-5 sm:top-4">
-                  <div className="animate-float">
-                    <HeroChip icon={ShieldCheck} tone="primary">
-                      تضمین استریلیزاسیون
-                    </HeroChip>
+                {/* نشان‌های شناور — با یک شبکهٔ روی‌هم‌افتاده چیده شده‌اند، نه
+                    موقعیت‌دهی مطلقِ جداگانه: هر نشان خانهٔ خودش را دارد، پس
+                    با بزرگ‌شدن متن هرگز روی هم نمی‌افتند. شبکه فقط برای
+                    چیدمان است و اندازه/جای دایرهٔ مرکزی را تغییر نمی‌دهد.
+                    موبایل: دو ستون مساوی و متن قابل شکستن؛ تبلت و دسکتاپ:
+                    ستون‌های به‌اندازهٔ محتوا با فاصلهٔ کشسان در میانه.
+                    زیر ۳۶۰px نشان بالا-راست مثل قبل پنهان می‌شود. */}
+                <div className="pointer-events-none absolute inset-0 grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-x-2 gap-y-2 p-3 min-[360px]:grid-cols-2 sm:grid-cols-[auto_1fr_auto] sm:p-4">
+                  <div className="col-start-1 row-start-1 self-start justify-self-end min-[360px]:col-start-2 sm:col-start-3">
+                    <div className="animate-float [animation-delay:2.5s]">
+                      <HeroChip icon={MessagesSquare} tone="sky">
+                        توضیح شفاف پیش از درمان
+                      </HeroChip>
+                    </div>
                   </div>
-                </div>
-                <div className="absolute left-3 top-3 sm:left-5 sm:top-4">
-                  <div className="animate-float [animation-delay:2.5s]">
-                    <HeroChip icon={MessagesSquare} tone="sky">
-                      توضیح شفاف پیش از درمان
-                    </HeroChip>
+                  <div className="col-start-1 row-start-1 hidden self-start justify-self-start min-[360px]:block">
+                    <div className="animate-float">
+                      <HeroChip icon={ShieldCheck} tone="primary">
+                        تضمین استریلیزاسیون
+                      </HeroChip>
+                    </div>
                   </div>
-                </div>
-                <div className="absolute left-3 bottom-3 sm:left-5 sm:bottom-4">
-                  <div className="animate-float [animation-delay:4.5s]">
-                    <HeroChip icon={CalendarCheck} tone="indigo">
-                      رزرو آنلاین، بدون تماس
-                    </HeroChip>
+                  <div className="col-span-1 col-start-1 row-start-3 self-start justify-self-end min-[360px]:col-span-2 sm:col-span-1 sm:col-start-3">
+                    <div className="animate-float [animation-delay:4.5s]">
+                      <HeroChip icon={CalendarCheck} tone="indigo">
+                        رزرو آنلاین، بدون تماس
+                      </HeroChip>
+                    </div>
                   </div>
                 </div>
               </div>
